@@ -1,0 +1,39 @@
+# Private working material
+private/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Java / Maven
+**/target/
+*.class
+**/application-local.properties
+
+# Node.js
+**/node_modules/
+**/dist/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+*.iml
+
+# Acquired corpus and downloaded models
+/corpus/
+/models/
+
+# Spring local configuration
+**/application-local.yaml
+**/application-local.yml
+
+# Frontend generated metadata
+**/coverage/
+*.tsbuildinfo
+
+# JVM diagnostics
+hs_err_pid*
+replay_pid*
+*.hprof

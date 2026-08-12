@@ -20,6 +20,7 @@ private/
 .vscode/
 .DS_Store
 *.iml
+.obsidian/
 
 # Acquired corpus and downloaded models
 /corpus/

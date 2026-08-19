@@ -1,14 +1,9 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.command;
 
-import java.time.Instant;
-
 /**
- * Describes one immutable revision of a documentation source to ingest.
+ * Requests registration of one source revision by its declared version identifier.
  */
 public record SourceRevisionRegistration(
-        String versionIdentifier,
-        String acquisitionMethod,
-        Instant acquiredAt,
-        String integrityHash
+        String versionIdentifier
 ) {
 }

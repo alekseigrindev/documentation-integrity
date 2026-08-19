@@ -19,16 +19,14 @@ public interface SourceRevisionRepository extends JpaRepository<SourceRevision, 
             source_id,
             version_identifier,
             acquisition_method,
-            acquired_at,
-            integrity_hash
+            acquired_at
         )
         VALUES (
             :#{#sourceRevision.id},
             :#{#sourceRevision.sourceId},
             :#{#sourceRevision.versionIdentifier},
             :#{#sourceRevision.acquisitionMethod},
-            :#{#sourceRevision.acquiredAt},
-            :#{#sourceRevision.integrityHash}
+            :#{#sourceRevision.acquiredAt}
         )
             ON CONFLICT (source_id, version_identifier) DO NOTHING
         """, nativeQuery = true)

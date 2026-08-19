@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,5 +41,10 @@ public class SourceService {
                 .orElseThrow(() -> new IllegalStateException("Source was not found after registration."));
 
         return new SourceRegistrationResult(existingSource, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Source> findAll() {
+        return sourceRepository.findAllByOrderByNameAscIdAsc();
     }
 }

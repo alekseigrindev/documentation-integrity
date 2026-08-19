@@ -15,3 +15,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: false
+
+documentation-integrity:
+  import:
+    checkout-root: ${DOCUMENTATION_CHECKOUT_ROOT}

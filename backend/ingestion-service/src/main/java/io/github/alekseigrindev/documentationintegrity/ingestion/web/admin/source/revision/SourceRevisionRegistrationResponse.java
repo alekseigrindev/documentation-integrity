@@ -8,7 +8,6 @@ public record SourceRevisionRegistrationResponse(
         UUID sourceId,
         String versionIdentifier,
         String acquisitionMethod,
-        Instant acquiredAt,
-        String integrityHash
+        Instant acquiredAt
 ) {
 }

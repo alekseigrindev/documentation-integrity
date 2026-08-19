@@ -35,7 +35,4 @@ public class SourceRevision {
     @Column(name = "acquired_at")
     private Instant acquiredAt;
 
-    @Column(name = "integrity_hash")
-    private String integrityHash;
-
 }

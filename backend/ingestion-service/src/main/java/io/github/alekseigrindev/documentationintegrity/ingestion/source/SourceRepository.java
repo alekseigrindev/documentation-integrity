@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,4 +40,6 @@ public interface SourceRepository extends JpaRepository<Source, UUID> {
         ON CONFLICT (authority_url) DO NOTHING
         """, nativeQuery = true)
     int insertIfAbsent(@Param("source") Source source);
+
+    List<Source> findAllByOrderByNameAscIdAsc();
 }

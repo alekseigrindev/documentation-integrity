@@ -4,9 +4,9 @@ import java.net.URI;
 import java.util.UUID;
 
 /**
- * Source registration response DTO
+ * Public representation of a registered documentation source.
  */
-public record SourceRegistrationResponse(
+public record SourceResponse(
         UUID id,
         String name,
         URI authorityUrl

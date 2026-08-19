@@ -7,10 +7,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,12 +20,18 @@ public class SourceAdminController {
     private final SourceMapper sourceMapper;
 
     @PostMapping
-    public ResponseEntity<SourceRegistrationResponse> register(
+    public ResponseEntity<SourceResponse> register(
             @Valid @RequestBody SourceRegistrationRequest request
     ) {
         SourceRegistrationResult result = sourceService.register(sourceMapper.toSourceRegistration(request));
         HttpStatus status = result.created() ? HttpStatus.CREATED : HttpStatus.OK;
         return ResponseEntity.status(status).body(sourceMapper.toResponse(result.source()));
     }
+
+    @GetMapping
+    public ResponseEntity<List<SourceResponse>> getAll() {
+        return ResponseEntity.ok(sourceMapper.toResponseList(sourceService.findAll()));
+    }
+
 
 }

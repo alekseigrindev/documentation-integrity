@@ -1,15 +1,30 @@
 # Development Guide
 
+## Scope and delivery discipline
+
+
+## Git Restriction
+
+Do not execute Git commands in this dialogue. This prohibition includes both
+mutating and read-only commands, including `git status`, `git diff`, `git log`,
+`git show`, `git add`, `git commit`, `git switch`, `git checkout`, `git merge`,
+`git push`, and `git pull`. When Git information or an operation is needed,
+provide the exact command for Aleksei to run and review only the output he
+shares in chat.
+
 ## Product
 
-This repository contains a public, local-first knowledge retrieval system with a
-chat demonstration surface. The primary user is a developer or DevOps engineer
-responsible for building and troubleshooting GitHub Actions CI/CD workflows.
+This repository contains a public, local-first, connector-neutral knowledge
+retrieval system with a chat demonstration surface. The primary user is a
+developer or DevOps engineer responsible for building and troubleshooting
+GitHub Actions CI/CD workflows.
 
 The initial knowledge corpus is the current GitHub.com (`fpt`) variant of
 `content/actions/` from the official `github/docs` repository, including the
 reusable fragments and variables it references from `data/reusables/` and
-`data/variables/`.
+`data/variables/`. A local-directory connector acquires that corpus, while a
+file-upload connector provides the second v1 proof of the shared ingestion
+contract. Authenticated Jira and Google Docs connectors are future extensions.
 
 Read `PRODUCT_SPEC.md` and `TECH_STACK_SPEC.md` before changing application behavior. Keep both documents current when an architectural or scope decision changes.
 
@@ -35,13 +50,23 @@ tests, and an ADR that compares it with an in-process module.
 - Ingest only explicitly allowlisted sources whose automated access, retention,
   and use are permitted. Public availability alone is not permission to crawl.
 - Use synthetic or explicitly licensed fixtures in tests and public CI.
-- Acquire GitHub Docs from a pinned Git checkout; do not crawl
-  `docs.github.com`.
+- Keep acquisition behind a connector-neutral contract. Do not make Git commit
+  history a mandatory domain concept for every source.
+- Acquire the initial GitHub Docs corpus from a pinned local checkout; do not
+  crawl `docs.github.com`.
+- Accept uploaded content only when the operator is authorized to process and
+  retain it. Use synthetic or explicitly licensed uploads in tests and public
+  demonstrations.
 - Resolve supported front matter, reusable fragments, variables, and version
   conditions before chunking. Never index unresolved template directives as
   documentation.
-- Preserve repository path, source commit, canonical URL, product variant,
-  content hash, and CC BY 4.0 attribution for every indexed document.
+- Preserve a stable source locator, canonical URL when available, optional
+  upstream version, product variant, acquisition time, content hash, and
+  attribution for every indexed document. For the initial Git connector, the
+  locator is the repository path and the upstream version is the commit SHA.
+- Store only the latest successfully ingested state of each logical document in
+  v1. Replace changed chunks and embeddings atomically and remove stale
+  documents after a complete source scan.
 - Use hybrid retrieval: pgvector semantic search plus PostgreSQL full-text search.
 - Keep an HNSW vector index and a GIN full-text index on searchable chunk data.
 - Rerank merged candidates with `bge-reranker-v2-m3` through ONNX Runtime before generation.

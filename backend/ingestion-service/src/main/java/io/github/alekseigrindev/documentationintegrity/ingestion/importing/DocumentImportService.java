@@ -1,156 +1,95 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.importing;
 
-import io.github.alekseigrindev.documentationintegrity.ingestion.command.DocumentImportCommand;
-import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentChunk;
-import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentChunkRepository;
-import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocument;
-import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocumentRepository;
-import io.github.alekseigrindev.documentationintegrity.ingestion.document.ParagraphChunker;
+import io.github.alekseigrindev.documentationintegrity.ingestion.command.LocalDocumentImportCommand;
+import io.github.alekseigrindev.documentationintegrity.ingestion.command.UploadedDocumentImportCommand;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.AcquiredDocument;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.DocumentConnector;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.FileUploadDocumentConnector;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.LocalDirectoryDocumentConnector;
+import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRunService;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.Source;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.SourceRepository;
-import io.github.alekseigrindev.documentationintegrity.ingestion.source.revision.SourceRevision;
-import io.github.alekseigrindev.documentationintegrity.ingestion.source.revision.SourceRevisionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-import java.util.List;
+import java.time.Clock;
 import java.util.UUID;
 
+/**
+ * Imports acquired documentation into the current searchable document state.
+ */
 @Service
 @RequiredArgsConstructor
 public class DocumentImportService {
 
-    private final SourceRevisionRepository sourceRevisionRepository;
     private final SourceRepository sourceRepository;
-    private final DocumentationDocumentRepository documentationDocumentRepository;
-    private final DocumentChunkRepository documentChunkRepository;
-    private final LocalCheckoutDocumentReader documentReader;
-    private final ParagraphChunker paragraphChunker;
+    private final LocalDirectoryDocumentConnector localDirectoryConnector;
+    private final FileUploadDocumentConnector fileUploadConnector;
+    private final DocumentPreparationService documentPreparationService;
+    private final DocumentStateWriter documentStateWriter;
+    private final IngestionRunService ingestionRunService;
+    private final Clock clock;
 
-    @Transactional
-    public DocumentImportResult importDocument(
-            UUID sourceRevisionId,
-            DocumentImportCommand command
+    public DocumentImportResult importFromLocalDirectory(
+            UUID sourceId,
+            LocalDocumentImportCommand command
     ) {
-        SourceRevision sourceRevision = sourceRevisionRepository.findById(sourceRevisionId)
+        return importDocument(sourceId, localDirectoryConnector, command);
+    }
+
+    public DocumentImportResult importUpload(
+            UUID sourceId,
+            UploadedDocumentImportCommand command
+    ) {
+        return importDocument(sourceId, fileUploadConnector, command);
+    }
+
+    /**
+     * Prepares and persists one document already acquired by a connector.
+     */
+    public DocumentStateResult importAcquiredDocument(
+            Source source,
+            AcquiredDocument acquiredDocument
+    ) {
+        PreparedDocument preparedDocument =
+                documentPreparationService.prepare(acquiredDocument);
+
+        return documentStateWriter.synchronize(
+                source,
+                preparedDocument,
+                clock.instant()
+        );
+    }
+
+    private <I> DocumentImportResult importDocument(
+            UUID sourceId,
+            DocumentConnector<I> connector,
+            I input
+    ) {
+        Source source = sourceRepository.findById(sourceId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Source revision was not found: " + sourceRevisionId
+                        "Source was not found: " + sourceId
                 ));
 
-        return documentationDocumentRepository
-                .findBySourceRevisionIdAndSourceLocator(
-                        sourceRevisionId,
-                        command.sourceLocator()
-                )
-                .map(this::existingImport)
-                .orElseGet(() -> createImport(sourceRevision, command));
-    }
+        UUID runId = ingestionRunService.start(source.getId());
 
-    private DocumentImportResult createImport(
-            SourceRevision sourceRevision,
-            DocumentImportCommand command
-    ) {
-        String resolvedContent = documentReader.read(command.sourceLocator());
-        List<String> paragraphs = paragraphChunker.chunk(resolvedContent);
-
-        if (paragraphs.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Documentation file contains no searchable paragraphs."
-            );
-        }
-
-        Source source = sourceRepository.findById(sourceRevision.getSourceId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Source was not found: " + sourceRevision.getSourceId()
-                ));
-
-        DocumentationDocument document = new DocumentationDocument(
-                UUID.randomUUID(),
-                sourceRevision.getId(),
-                command.sourceLocator(),
-                command.canonicalUrl(),
-                command.productVariant(),
-                sha256Hex(resolvedContent),
-                attributionFor(source),
-                resolvedContent
-        );
-
-        int inserted = documentationDocumentRepository.insertIfAbsent(document);
-
-        if (inserted == 0) {
-            DocumentationDocument existingDocument = documentationDocumentRepository
-                    .findBySourceRevisionIdAndSourceLocator(
-                            sourceRevision.getId(),
-                            command.sourceLocator()
-                    )
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Document was not found after concurrent import."
-                    ));
-
-            return existingImport(existingDocument);
-        }
-
-        List<DocumentChunk> chunks = createChunks(document.getId(), paragraphs);
-        documentChunkRepository.saveAll(chunks);
-
-        return new DocumentImportResult(document, chunks.size(), true);
-    }
-
-    private DocumentImportResult existingImport(
-            DocumentationDocument document
-    ) {
-        int chunkCount = Math.toIntExact(
-                documentChunkRepository.countByDocumentId(document.getId())
-        );
-
-        return new DocumentImportResult(document, chunkCount, false);
-    }
-
-    private List<DocumentChunk> createChunks(
-            UUID documentId,
-            List<String> paragraphs
-    ) {
-        return java.util.stream.IntStream.range(0, paragraphs.size())
-                .mapToObj(ordinal -> {
-                    String content = paragraphs.get(ordinal);
-
-                    return new DocumentChunk(
-                            UUID.randomUUID(),
-                            documentId,
-                            ordinal,
-                            content,
-                            sha256Hex(content)
-                    );
-                })
-                .toList();
-    }
-
-    private String attributionFor(Source source) {
-        return "%s: %s; %s (%s)".formatted(
-                source.getName(),
-                source.getAuthorityUrl(),
-                source.getLicenseName(),
-                source.getLicenseUrl()
-        );
-    }
-
-    private String sha256Hex(String content) {
         try {
-            byte[] hash = MessageDigest.getInstance("SHA-256")
-                    .digest(content.getBytes(StandardCharsets.UTF_8));
+            AcquiredDocument acquiredDocument = connector.acquire(input);
+            DocumentStateResult stateResult =
+                    importAcquiredDocument(source, acquiredDocument);
 
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException(
-                    "SHA-256 is not available in this Java runtime.",
-                    exception
+            ingestionRunService.succeed(runId);
+
+            return new DocumentImportResult(
+                    runId,
+                    stateResult.document(),
+                    stateResult.chunkCount(),
+                    stateResult.outcome()
             );
+        } catch (RuntimeException exception) {
+            ingestionRunService.fail(runId, exception);
+            throw exception;
         }
     }
 }

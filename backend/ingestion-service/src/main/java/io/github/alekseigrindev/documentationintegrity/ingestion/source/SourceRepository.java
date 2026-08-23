@@ -4,40 +4,41 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface SourceRepository extends JpaRepository<Source, UUID> {
 
-    @Query(value = """
-        SELECT id, name, authority_url, license_name, license_url, access_policy_url
-        FROM knowledge.sources
-        WHERE authority_url = :authorityUrl
-        """, nativeQuery = true)
-    Optional<Source> findByAuthorityUrl(@Param("authorityUrl") String authorityUrl);
+    Optional<Source> findBySourceKey(String sourceKey);
 
     @Modifying
     @Query(value = """
         INSERT INTO knowledge.sources (
             id,
+            publisher_id,
+            connector_type,
+            source_key,
             name,
-            authority_url,
+            description,
+            source_url,
             license_name,
             license_url,
             access_policy_url
         )
         VALUES (
             :#{#source.id},
+            :#{#source.publisher.id},
+            :#{#source.connectorType.name()},
+            :#{#source.sourceKey},
             :#{#source.name},
-            :#{#source.authorityUrl.toString()},
+            :#{#source.description},
+            :#{#source.sourceUrl == null ? null : #source.sourceUrl.toString()},
             :#{#source.licenseName},
-            :#{#source.licenseUrl.toString()},
-            :#{#source.accessPolicyUrl.toString()}
+            :#{#source.licenseUrl == null ? null : #source.licenseUrl.toString()},
+            :#{#source.accessPolicyUrl == null ? null : #source.accessPolicyUrl.toString()}
         )
-        ON CONFLICT (authority_url) DO NOTHING
+        ON CONFLICT (source_key) DO NOTHING
         """, nativeQuery = true)
     int insertIfAbsent(@Param("source") Source source);
 

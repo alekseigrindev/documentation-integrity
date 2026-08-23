@@ -16,6 +16,10 @@ observable and testable.
 Chat is the required v1 interface. The longer-term product is a knowledge
 quality platform with freshness, change, and contradiction analysis.
 
+The ingestion core is connector-neutral. Git is the acquisition mechanism for
+the initial licensed corpus, not a mandatory versioning model for every future
+source.
+
 ## Target Users
 
 - Primary: a developer or DevOps engineer responsible for building and
@@ -52,21 +56,36 @@ explanation or explicitly abstain.
    system to request the missing context or explicitly abstain.
 4. An operator runs the versioned evaluation suite and compares retrieval and
    reranking configurations.
+5. An operator imports an authorized Markdown or text file through the same
+   normalization, provenance, indexing, and retrieval pipeline used for the
+   initial local documentation checkout.
 
 ## v1.0.0 Scope
 
 - One conversational interface accepting a natural-language problem and an
   optional workflow fragment or error excerpt.
 - Manual ingestion triggered by an admin API or UI action.
-- A pinned checkout of the official `github/docs` repository as the source.
+- A connector-neutral acquisition contract with two adapters: a local
+  directory and an operator-provided Markdown or text file.
+- A pinned local checkout of the official `github/docs` repository as the
+  initial licensed corpus.
 - The current GitHub.com (`fpt`) variant of `content/actions/` as the initial
   corpus, including referenced fragments and values from `data/reusables/` and
   `data/variables/`.
 - Local parsing of Markdown, front matter, reusable fragments, variables, and
   supported version conditions; no HTTP crawl of `docs.github.com`.
-- Provenance for every indexed chunk: repository, path, source commit, canonical
-  URL, product variant, license, ingestion time, and content hash.
-- Idempotent ingestion of unchanged source snapshots.
+- Provenance for every indexed chunk: source, stable source locator, canonical
+  URL when available, optional upstream version, product variant, attribution,
+  ingestion time, and content hash. For the initial Git corpus, the upstream
+  version is the commit SHA.
+- Current-state storage for logical documents, identified by source, product
+  variant, and stable source locator.
+- Idempotent ingestion of unchanged documents and transactional replacement of
+  changed documents with their chunks and embeddings.
+- An observable source ingestion attempt recording status, timing, and
+  failures without pretending that every source has a global revision. A
+  failed attempt may leave partially synchronized current state; the operator
+  searches only after a successful attempt.
 - PostgreSQL full-text and pgvector retrieval with a documented fusion method.
 - Local cross-encoder reranking before answer generation.
 - Retrieval-grounded diagnosis with assumptions, source citations, and a
@@ -79,9 +98,13 @@ explanation or explicitly abstain.
 
 - Authenticated access to GitHub organizations, repositories, Actions runs, or
   logs.
+- Authenticated Jira and Google Docs connectors. They are planned extension
+  points after the connector contract is proven without OAuth and proprietary
+  test data.
 - Executing, editing, or committing a user's workflow.
 - Receiving or storing real credentials, tokens, or secrets.
-- Product variants other than the current GitHub.com (`fpt`) documentation.
+- GitHub Docs product variants other than the current GitHub.com (`fpt`)
+  documentation.
 - GitHub documentation outside the selected Actions corpus.
 - Internet-wide or unauthorized crawling.
 - Distribution of third-party documentation content in the repository.
@@ -106,13 +129,19 @@ The following are targets, not current performance claims:
   documented review rubric.
 - The reranked configuration is compared against lexical-only, vector-only, and
   hybrid-without-reranking baselines using MRR or nDCG.
-- Re-ingesting an unchanged snapshot creates no duplicate logical chunks.
+- Re-ingesting unchanged documents creates no duplicate logical chunks.
+- Re-ingesting a changed document leaves only its new chunks searchable.
+- The local-directory and file-upload adapters produce the same normalized
+  document contract and provenance guarantees.
 - End-to-end and stage-level p50/p95 latency are reported on documented
   hardware; a latency target is set after the first baseline.
 
 ## Next Product Milestone
 
-- Preserve and compare source snapshots.
+- Add authenticated Jira and Google Docs connectors with explicit permission,
+  secret-handling, pagination, deletion, and rate-limit semantics.
+- Preserve and compare corpus snapshots when concurrent ingestion and search or
+  atomic corpus rollback becomes a demonstrated requirement.
 - Mark answers affected by source changes.
 - Identify candidate contradictions with supporting passages.
 - Run regression evaluation when the corpus, model, prompt, or ranking

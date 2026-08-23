@@ -1,5 +1,7 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.source;
 
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.ConnectorType;
+
 import java.net.URI;
 import java.util.UUID;
 
@@ -8,7 +10,14 @@ import java.util.UUID;
  */
 public record SourceResponse(
         UUID id,
+        UUID publisherId,
+        ConnectorType connectorType,
+        String sourceKey,
         String name,
-        URI authorityUrl
+        String description,
+        URI sourceUrl,
+        String licenseName,
+        URI licenseUrl,
+        URI accessPolicyUrl
 ) {
 }

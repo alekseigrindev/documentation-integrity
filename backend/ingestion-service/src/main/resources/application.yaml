@@ -17,6 +17,12 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
+  servlet:
+    multipart:
+      max-file-size: ${DOCUMENTATION_MULTIPART_MAX_FILE_SIZE:1MB}
+      max-request-size: ${DOCUMENTATION_MULTIPART_MAX_REQUEST_SIZE:2MB}
+
 documentation-integrity:
   import:
     checkout-root: ${DOCUMENTATION_CHECKOUT_ROOT}
+    max-file-bytes: ${DOCUMENTATION_MAX_FILE_BYTES:1048576}

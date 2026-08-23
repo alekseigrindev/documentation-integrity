@@ -4,6 +4,7 @@ import io.github.alekseigrindev.documentationintegrity.ingestion.command.SourceR
 import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.source.SourceRegistrationRequest;
 import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.source.SourceResponse;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ public interface SourceMapper {
 
     SourceRegistration toSourceRegistration(SourceRegistrationRequest request);
 
+    @Mapping(target = "publisherId", source = "publisher.id")
     SourceResponse toResponse(Source source);
 
     List<SourceResponse> toResponseList(List<Source> sourceList);

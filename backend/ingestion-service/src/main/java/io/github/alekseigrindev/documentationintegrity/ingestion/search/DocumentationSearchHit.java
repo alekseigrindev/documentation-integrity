@@ -1,6 +1,7 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.search;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -11,10 +12,13 @@ public record DocumentationSearchHit(
         int chunkOrdinal,
         String content,
         String chunkContentHash,
+        UUID sourceId,
         String sourceLocator,
         URI canonicalUrl,
         String productVariant,
-        String sourceRevisionVersionIdentifier,
+        String upstreamVersion,
+        String mediaType,
+        Instant acquiredAt,
         String documentContentHash,
         String attribution
 ) {

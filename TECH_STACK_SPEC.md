@@ -13,31 +13,33 @@
   are permitted.
 - Acquire the initial documentation from its licensed Git repository rather
   than crawling the rendered website.
+- Keep source-specific acquisition behind a connector-neutral application
+  boundary and store the current successfully indexed document state in v1.
 
 ## Implementation Status
 
 | Area | Choice | Status |
 | --- | --- | --- |
-| Primary language and runtime | Java 25 | Selected; application pending |
-| Application framework | Spring Boot 4.x + Spring AI 2.0.0 | Exact Boot patch pending |
-| Backend build | Maven reactor + Maven Wrapper | In progress |
+| Primary language and runtime | Java 25 | Implemented |
+| Application framework | Spring Boot 4.1.0; Spring AI 2.0.0 target | Boot application implemented; Spring AI pending |
+| Backend build | Maven reactor | Implemented; Maven Wrapper pending |
 | Web client | React + TypeScript | Target |
-| Repository layout | `backend/`, `frontend/`, `infra/`, `docs/` | Selected; infrastructure present, application directories pending |
+| Repository layout | `backend/`, `frontend/`, `infra/`, `docs/` | Backend, infrastructure, and docs present; frontend pending |
 | Local infrastructure | Docker Compose | Implemented |
 | Transactional/vector storage | PostgreSQL 17 + pgvector | Container verified |
-| Schema migrations | Flyway | Next |
-| Lexical search | PostgreSQL FTS + GIN | Target |
+| Schema migrations | Flyway | Implemented and integration-tested |
+| Lexical search | PostgreSQL FTS + GIN | Implemented and integration-tested |
 | Vector search | pgvector + HNSW | Target |
 | Chat model | `qwen3:8b` via host Ollama | Target |
 | Embedding model | `nomic-embed-text` via ONNX Runtime | Target |
 | Reranker | `bge-reranker-v2-m3` via ONNX Runtime | Target |
 | Async ingestion | Apache Kafka | Container verified; application boundary pending |
 | Internal RPC | gRPC + protobuf | Target after retrieval boundary exists |
-| Testing | JUnit 5, AssertJ, Testcontainers | Next |
+| Testing | JUnit 5, AssertJ, Testcontainers | Implemented for current ingestion slice |
 | Observability | Micrometer + OpenTelemetry | Target |
 | CI | GitHub Actions | Next |
 | Initial corpus | `github/docs` Actions content + referenced data | Selected |
-| Source acquisition | Pinned Git checkout | Target |
+| Source acquisition | Local directory + file upload behind one connector contract | Implemented and integration-tested for single-document synchronization |
 
 ## Incremental Architecture
 
@@ -46,11 +48,13 @@
 2. Add PostgreSQL ownership through Flyway and Testcontainers.
 3. Prove one synchronous ingestion-to-answer vertical slice with a synthetic
    fixture shaped like the selected GitHub Actions corpus.
-4. Extract a typed retrieval boundary and introduce protobuf/gRPC when
+4. Prove connector neutrality with local-directory and file-upload adapters
+   that emit the same normalized document contract.
+5. Extract a typed retrieval boundary and introduce protobuf/gRPC when
    independent scaling and latency instrumentation can be demonstrated.
-5. Introduce Kafka when ingestion becomes asynchronous; ship idempotency,
+6. Introduce Kafka when ingestion becomes asynchronous; ship idempotency,
    retries, dead-letter handling, and consumer metrics with it.
-6. Add the React chat after the public API contract is stable.
+7. Add the React chat after the public API contract is stable.
 
 Empty service directories are not considered implemented services.
 
@@ -122,14 +126,24 @@ logic rather than framework configuration.
 - Render the current GitHub.com (`fpt`) variant from Markdown, front matter,
   reusable fragments, variables, and supported Liquid version conditions.
   Unresolved directives are ingestion errors, not searchable text.
-- Record repository URL, path, commit SHA, canonical URL, product variant,
-  CC BY 4.0 license metadata, ingestion time, content hash, and snapshot
-  identity.
+- Record source identity, stable source locator, canonical URL when available,
+  optional upstream version, product variant, attribution, ingestion time, and
+  content hash. For GitHub Docs, record the repository URL, path, commit SHA,
+  and CC BY 4.0 metadata.
+- Keep one current searchable representation per logical document in v1.
+  Generate replacements before opening the database transaction, then replace
+  changed document content, chunks, and embeddings transactionally.
+- Record source ingestion attempts separately from source content. Each
+  attempt owns its status, timing, and failure details; it is not a source
+  revision. A failed attempt may leave partial current state, so the MVP
+  operator searches only after a successful attempt.
 - Do not crawl `docs.github.com` or commit the acquired corpus or derived
   embeddings.
 - Record model name, version/revision, checksum, license, quantization, tokenizer,
   and runtime configuration for every benchmark.
 - Use synthetic or explicitly licensed fixtures in CI.
+- Never commit uploaded documents. Public tests and demonstrations use
+  synthetic or explicitly licensed uploads.
 
 ## Reliability and Security
 
@@ -147,8 +161,8 @@ logic rather than framework configuration.
 
 ## Testing and Evaluation
 
-- Unit tests for source rendering, request-context extraction, chunking, fusion,
-  thresholds, and citation assembly.
+- Unit tests for connector normalization, source rendering, request-context
+  extraction, chunking, fusion, thresholds, and citation assembly.
 - Testcontainers integration tests for PostgreSQL/pgvector, Flyway, and Kafka.
 - Contract compatibility tests for protobuf and public API schemas.
 - End-to-end test using a small legally usable fixture corpus.
@@ -165,3 +179,5 @@ logic rather than framework configuration.
 5. Initial evidence threshold and latency target after baseline measurement.
 6. Model artifact download and verification mechanism.
 7. Input redaction and retention policy for submitted workflows and logs.
+8. Authentication and permission model for future Jira and Google Docs
+   connectors.

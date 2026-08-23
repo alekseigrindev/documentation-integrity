@@ -1,27 +1,26 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.importing;
 
-import io.github.alekseigrindev.documentationintegrity.ingestion.command.DocumentImportCommand;
-import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.source.revision.document.SourceRevisionDocumentImportRequest;
-import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.source.revision.document.SourceRevisionDocumentImportResponse;
+import io.github.alekseigrindev.documentationintegrity.ingestion.command.LocalDocumentImportCommand;
+import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.document.DocumentImportResponse;
+import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.document.LocalDocumentImportRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface DocumentImportMapper {
 
-    DocumentImportCommand toCommand(
-            SourceRevisionDocumentImportRequest request
-    );
+    LocalDocumentImportCommand toCommand(LocalDocumentImportRequest request);
 
     @Mapping(target = "documentId", source = "document.id")
-    @Mapping(target = "sourceRevisionId", source = "document.sourceRevisionId")
+    @Mapping(target = "sourceId", source = "document.sourceId")
     @Mapping(target = "sourceLocator", source = "document.sourceLocator")
     @Mapping(target = "canonicalUrl", source = "document.canonicalUrl")
     @Mapping(target = "productVariant", source = "document.productVariant")
+    @Mapping(target = "upstreamVersion", source = "document.upstreamVersion")
+    @Mapping(target = "mediaType", source = "document.mediaType")
+    @Mapping(target = "acquiredAt", source = "document.acquiredAt")
     @Mapping(target = "contentHash", source = "document.contentHash")
     @Mapping(target = "chunkCount", source = "chunkCount")
-    SourceRevisionDocumentImportResponse toResponse(
-            DocumentImportResult result
-    );
+    DocumentImportResponse toResponse(DocumentImportResult result);
 
 }

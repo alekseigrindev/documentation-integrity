@@ -23,10 +23,15 @@ public class DocumentationSearchService {
                         row.getChunkOrdinal(),
                         row.getContent(),
                         row.getChunkContentHash(),
+                        row.getSourceId(),
                         row.getSourceLocator(),
-                        URI.create(row.getCanonicalUrl()),
+                        row.getCanonicalUrl() == null
+                                ? null
+                                : URI.create(row.getCanonicalUrl()),
                         row.getProductVariant(),
-                        row.getSourceRevisionVersionIdentifier(),
+                        row.getUpstreamVersion(),
+                        row.getMediaType(),
+                        row.getAcquiredAt(),
                         row.getDocumentContentHash(),
                         row.getAttribution()
                 ))

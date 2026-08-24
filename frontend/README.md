@@ -1,32 +1,52 @@
-# React + TypeScript + Vite
+# Documentation Integrity Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The frontend foundation for Documentation Integrity. It is a minimal React and
+TypeScript application that currently displays a greeting screen.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 22.12 or later. This project was verified with Node.js 22.22.2.
+- npm, which is included with Node.js.
 
-## React Compiler
+## Install
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+From the repository root:
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cd frontend
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`npm install` uses the committed `package-lock.json` to reproduce the
+dependency set.
+
+## Run locally
+
+```bash
+npm run dev
+```
+
+Open the local URL printed by Vite, normally `http://localhost:5173/`.
+
+## Run the test
+
+```bash
+npm test
+```
+
+The test verifies that the greeting screen renders the Documentation Integrity
+heading and welcome message.
+
+## Create a production build
+
+```bash
+npm run build
+```
+
+The static production files are written to `dist/`.
+
+## Current scope
+
+This frontend foundation contains only a static greeting screen and its
+rendering test. Publisher management, Source management, ingestion, retrieval,
+and chat behavior belong to later milestones.

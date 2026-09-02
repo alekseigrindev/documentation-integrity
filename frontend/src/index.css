@@ -23,9 +23,9 @@ body {
   padding: 2rem;
 }
 
-.welcome {
+.publisher-management {
+  width: 100%;
   max-width: 42rem;
-  text-align: center;
 }
 
 h1 {
@@ -33,7 +33,24 @@ h1 {
   font-size: clamp(2rem, 8vw, 3.5rem);
 }
 
+h2 {
+  margin: 2rem 0 0;
+}
+
 p {
   margin: 1rem 0 0;
   line-height: 1.5;
+}
+
+.publisher-list {
+  margin: 1rem 0 0;
+  padding-left: 1.5rem;
+}
+
+.publisher-list li + li {
+  margin-top: 0.5rem;
+}
+
+.request-error {
+  color: #b91c1c;
 }

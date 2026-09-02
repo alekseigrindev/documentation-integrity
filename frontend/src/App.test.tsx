@@ -12,6 +12,26 @@ beforeEach(() => {
 })
 
 describe('App', () => {
+  it('shows Publishers as the current administration section', () => {
+    vi.mocked(listPublishers).mockReturnValue(new Promise(() => {}))
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Documentation Integrity',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('navigation', { name: 'Administration' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Publishers' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
   it('shows a loading state while Publishers are being loaded', () => {
     vi.mocked(listPublishers).mockReturnValue(new Promise(() => {}))
 

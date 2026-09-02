@@ -1,7 +1,13 @@
+import { useState } from 'react'
 import Navigation from './Navigation'
+import type { AdministrationSection } from './Navigation'
 import PublisherManagement from './publishers/PublisherManagement'
+import SourceManagement from './sources/SourceManagement'
 
 function App() {
+  const [activeSection, setActiveSection] =
+    useState<AdministrationSection>('sources')
+
   return (
     <div className="app">
       <header className="app-header">
@@ -12,10 +18,17 @@ function App() {
       </header>
 
       <div className="app-layout">
-        <Navigation />
+        <Navigation
+          activeSection={activeSection}
+          onSectionSelect={setActiveSection}
+        />
 
         <main className="main-content">
-          <PublisherManagement />
+          {activeSection === 'sources' ? (
+            <SourceManagement />
+          ) : (
+            <PublisherManagement />
+          )}
         </main>
       </div>
     </div>

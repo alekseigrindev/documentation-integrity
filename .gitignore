@@ -38,3 +38,7 @@ private/
 hs_err_pid*
 replay_pid*
 *.hprof
+
+
+#md
+CURRENT_FOCUS.md

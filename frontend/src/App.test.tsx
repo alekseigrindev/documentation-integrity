@@ -1,16 +1,27 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
-describe('App', () => {
-    it('renders the welcome screen', () => {
-        render(<App />)
+vi.mock('./publishers/PublisherManagement', () => ({
+  default: () => <div>Publisher management</div>,
+}))
 
-        expect(
-            screen.getByRole('heading', { name: 'Documentation Integrity' }),
-        ).toBeInTheDocument()
-        expect(
-            screen.getByText('Welcome to the frontend foundation.'),
-        ).toBeInTheDocument()
-    })
+describe('App', () => {
+  it('shows Publishers as the current administration section', () => {
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Documentation Integrity',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('navigation', { name: 'Administration' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Publishers' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
 })

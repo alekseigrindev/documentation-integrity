@@ -1,11 +1,24 @@
+import Navigation from './Navigation'
+import PublisherManagement from './publishers/PublisherManagement'
+
 function App() {
   return (
-      <main className="app-shell">
-        <section className="welcome" aria-labelledby="page-title">
-          <h1 id="page-title">Documentation Integrity</h1>
-          <p>Welcome to the frontend foundation.</p>
-        </section>
-      </main>
+    <div className="app">
+      <header className="app-header">
+        <span className="brand-mark" aria-hidden="true">
+          DI
+        </span>
+        <h1>Documentation Integrity</h1>
+      </header>
+
+      <div className="app-layout">
+        <Navigation />
+
+        <main className="main-content">
+          <PublisherManagement />
+        </main>
+      </div>
+    </div>
   )
 }
 

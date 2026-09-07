@@ -1,5 +1,6 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.publisher;
 
+import io.github.alekseigrindev.documentationintegrity.ingestion.command.PublisherRegistration;
 import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.publisher.PublisherRegistrationRequest;
 import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.publisher.PublisherResponse;
 import org.mapstruct.Mapper;

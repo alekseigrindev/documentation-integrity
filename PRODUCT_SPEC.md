@@ -13,12 +13,30 @@ incorrect retrieval result or an unsupported diagnosis. The system makes the
 proposed root cause, evidence, retrieval quality, citations, and abstention
 observable and testable.
 
-Chat is the required v1 interface. The longer-term product is a knowledge
-quality platform with freshness, change, and contradiction analysis.
+Chat is the required v1 interface. A broader knowledge-quality platform with
+freshness, change, and contradiction analysis is a post-v1 hypothesis, not
+current delivery scope.
 
 The ingestion core is connector-neutral. Git is the acquisition mechanism for
 the initial licensed corpus, not a mandatory versioning model for every future
 source.
+
+## Goal Hierarchy and Delivery Authority
+
+The external product goal determines what belongs in v1: evidence-backed
+GitHub Actions diagnosis or an explicit request for missing context. The
+project's internal portfolio goal determines the rigor and evidence attached to
+that work; it does not add product capabilities by itself.
+
+This specification defines the v1 release boundary, not the active backlog.
+`CURRENT_FOCUS.md` is the authority for what may be implemented now. A later
+scope item or a technology selected for v1 is context until its milestone
+becomes active.
+
+Starting with the first product vertical slice, each milestone includes the
+minimum backend, frontend, tests, and acceptance evidence needed to prove its
+user or operator outcome. Technology-only completion does not close a product
+milestone.
 
 ## Target Users
 
@@ -87,7 +105,8 @@ explanation or explicitly abstain.
   failed attempt may leave partially synchronized current state; the operator
   searches only after a successful attempt.
 - PostgreSQL full-text and pgvector retrieval with a documented fusion method.
-- Local cross-encoder reranking before answer generation.
+- A local cross-encoder evaluated against the hybrid baseline and retained
+  before answer generation only if it passes the agreed quality gate.
 - Retrieval-grounded diagnosis with assumptions, source citations, and a
   minimal corrective example only when supported by evidence.
 - A request for missing context or explicit abstention when retrieved evidence
@@ -115,7 +134,10 @@ explanation or explicitly abstain.
 
 ## Initial Acceptance Targets
 
-The following are targets, not current performance claims:
+The following are final v1 release targets, not current performance claims or
+authorization to implement them before their milestone becomes active. An
+initial development set may begin with 8–12 answerable and 3–5 insufficient-
+context cases; it must grow to the release target before v1 acceptance.
 
 - A versioned evaluation set with at least 30 reviewed cases covering workflow
   syntax, secrets and permissions, reusable workflows, triggers and
@@ -136,7 +158,11 @@ The following are targets, not current performance claims:
 - End-to-end and stage-level p50/p95 latency are reported on documented
   hardware; a latency target is set after the first baseline.
 
-## Next Product Milestone
+## Post-v1 Product Direction
+
+The following items are not development milestones and are not authorized v1
+work. Each requires a newly demonstrated user problem and an explicit scope
+decision after v1 acceptance.
 
 - Add authenticated Jira and Google Docs connectors with explicit permission,
   secret-handling, pagination, deletion, and rate-limit semantics.

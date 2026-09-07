@@ -55,4 +55,17 @@ public class Source {
 
     @Column(name = "access_policy_url")
     private URI accessPolicyUrl;
+
+    public void update(
+            Publisher publisher,
+            ConnectorType connectorType,
+            String sourceKey,
+            String name,
+            URI sourceUrl) {
+        this.publisher = publisher;
+        this.connectorType = connectorType;
+        this.sourceKey = sourceKey;
+        this.name = name;
+        this.sourceUrl = sourceUrl;
+    }
 }

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +32,18 @@ public class SourceAdminController {
     @GetMapping
     public ResponseEntity<List<SourceResponse>> getAll() {
         return ResponseEntity.ok(sourceMapper.toResponseList(sourceService.findAll()));
+    }
+
+    @PutMapping("/{sourceId}")
+    public ResponseEntity<SourceResponse> update(
+            @PathVariable UUID sourceId,
+            @Valid @RequestBody SourceUpdateRequest request
+            ) {
+        return ResponseEntity.ok(sourceMapper.toResponse(
+                sourceService.update(
+                        sourceId, sourceMapper.toSourceUpdate(request)
+                )
+        ));
     }
 
 

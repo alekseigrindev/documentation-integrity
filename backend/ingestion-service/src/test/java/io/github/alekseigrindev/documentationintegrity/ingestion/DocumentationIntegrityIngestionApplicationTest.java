@@ -1,8 +1,6 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion;
 
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentChunkRepository;
-import io.github.alekseigrindev.documentationintegrity.ingestion.importing.ImportOutcome;
-import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocument;
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocumentRepository;
 import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRun;
 import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionFailureCode;
@@ -16,6 +14,7 @@ import io.github.alekseigrindev.documentationintegrity.ingestion.source.SourceRe
 import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.document.LocalDocumentImportRequest;
 import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.document.UploadedDocumentImportMetadata;
 import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.source.SourceRegistrationRequest;
+import io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.run.IngestionRunRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +85,7 @@ class DocumentationIntegrityIngestionApplicationTest {
     static void configureImport(DynamicPropertyRegistry registry) {
         registry.add(
                 "documentation-integrity.import.checkout-root",
-                () -> FIXTURE_ROOT.toString()
+                FIXTURE_ROOT::toString
         );
         registry.add(
                 "documentation-integrity.import.max-file-bytes",
@@ -101,6 +100,44 @@ class DocumentationIntegrityIngestionApplicationTest {
         ingestionRunRepository.deleteAll();
         sourceRepository.deleteAll();
         publisherRepository.deleteAll();
+    }
+
+    @Test
+    void synchronizingTheSameGitHubFixtureTwiceDoesNotDuplicateDocuments() throws Exception {
+        Source source = registerSource(
+                "GitHub Actions Fixture",
+                URI.create("https://example.com/github-actions-fixture")
+        );
+        IngestionRunRequest request = new IngestionRunRequest(source.getId());
+
+        mockMvc.perform(post("/api/admin/ingestion-runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.sourceId").value(source.getId().toString()))
+                .andExpect(jsonPath("$.status").value("SUCCEEDED"));
+
+        assertThat(documentRepository.count()).isEqualTo(1);
+        long chunkCountAfterFirstRun = chunkRepository.count();
+
+        mockMvc.perform(post("/api/admin/ingestion-runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("SUCCEEDED"));
+
+        mockMvc.perform(get("/api/documents/search")
+                        .param("q", "write permission"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matches[0].content")
+                        .value("A workflow needs write permissions to publish a release."))
+                .andExpect(jsonPath("$.matches[0].sourceId")
+                        .value(source.getId().toString()));
+
+
+        assertThat(documentRepository.count()).isEqualTo(1);
+        assertThat(chunkRepository.count()).isEqualTo(chunkCountAfterFirstRun);
+        assertThat(ingestionRunRepository.count()).isEqualTo(2);
     }
 
     @Test
@@ -384,12 +421,12 @@ class DocumentationIntegrityIngestionApplicationTest {
 
         JsonNode localResponse = responseJson(localResult);
         JsonNode uploadResponse = responseJson(uploadResult);
-        assertThat(uploadResponse.get("contentHash").asText())
-                .isEqualTo(localResponse.get("contentHash").asText());
+        assertThat(uploadResponse.get("contentHash").asString())
+                .isEqualTo(localResponse.get("contentHash").asString());
         assertThat(uploadResponse.get("chunkCount").asInt())
                 .isEqualTo(localResponse.get("chunkCount").asInt());
-        assertThat(uploadResponse.get("mediaType").asText())
-                .isEqualTo(localResponse.get("mediaType").asText());
+        assertThat(uploadResponse.get("mediaType").asString())
+                .isEqualTo(localResponse.get("mediaType").asString());
     }
 
     @Test
@@ -467,9 +504,9 @@ class DocumentationIntegrityIngestionApplicationTest {
         );
 
         return mockMvc.perform(multipart(
-                        "/api/admin/sources/{sourceId}/documents/file-upload",
-                        sourceId
-                )
+                "/api/admin/sources/{sourceId}/documents/file-upload",
+                sourceId
+        )
                 .file(metadataPart(metadata))
                 .file(file));
     }
@@ -556,4 +593,5 @@ class DocumentationIntegrityIngestionApplicationTest {
             throw new IllegalStateException("Fixture root URI is invalid.", exception);
         }
     }
+
 }

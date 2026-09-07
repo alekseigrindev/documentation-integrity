@@ -10,9 +10,12 @@ import io.github.alekseigrindev.documentationintegrity.ingestion.source.SourceRe
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -27,6 +30,7 @@ public class SourceSynchronizationService {
     private final DocumentImportService documentImportService;
     private final List<SourceScanner> sourceScanners;
 
+    @Transactional
     public IngestionRun synchronize(UUID sourceId) {
         Source source = sourceRepository.findById(sourceId)
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -36,9 +40,13 @@ public class SourceSynchronizationService {
         UUID runId = ingestionRunService.start(source.getId());
 
         try (Stream<AcquiredDocument> documents = scannerFor(source).scan(source)) {
-            documents.forEach(document ->
-                    documentImportService.importAcquiredDocument(source, document)
-            );
+            List<AcquiredDocument> scannedDocuments = documents.toList();
+
+            Set<UUID> retainedDocumentIds = scannedDocuments.stream()
+                    .map(document -> documentImportService.importAcquiredDocument(source, document).document().getId())
+                    .collect(Collectors.toSet());
+
+            documentImportService.removeDocumentsMissingFromScan(source, retainedDocumentIds);
 
             ingestionRunService.succeed(runId);
             return ingestionRunService.get(runId);

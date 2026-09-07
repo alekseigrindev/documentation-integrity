@@ -1,4 +1,4 @@
-package io.github.alekseigrindev.documentationintegrity.ingestion.connector;
+package io.github.alekseigrindev.documentationintegrity.ingestion.connector.github_online_docs;
 
 import org.springframework.stereotype.Component;
 

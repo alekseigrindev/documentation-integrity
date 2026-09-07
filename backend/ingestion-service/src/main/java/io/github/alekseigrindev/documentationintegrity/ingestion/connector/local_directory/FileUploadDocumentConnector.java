@@ -1,6 +1,8 @@
-package io.github.alekseigrindev.documentationintegrity.ingestion.connector;
+package io.github.alekseigrindev.documentationintegrity.ingestion.connector.local_directory;
 
 import io.github.alekseigrindev.documentationintegrity.ingestion.command.UploadedDocumentImportCommand;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.AcquiredDocument;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.DocumentConnector;
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentType;
 import io.github.alekseigrindev.documentationintegrity.ingestion.importing.DocumentationImportProperties;
 import lombok.RequiredArgsConstructor;

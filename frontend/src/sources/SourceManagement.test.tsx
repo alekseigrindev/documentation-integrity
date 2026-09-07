@@ -1,16 +1,34 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SourceManagement from './SourceManagement'
-import { createSource, listSources } from './sourceApi'
+import {
+  chooseLocalDirectory,
+  createSource,
+  listSources,
+  updateSource,
+} from './sourceApi'
+import { listConnectors } from './connectorApi'
+import { latestIngestionRun, synchronizeSource } from './ingestionRunApi'
 import { listPublishers } from '../publishers/publisherApi'
 
 vi.mock('./sourceApi', () => ({
+  chooseLocalDirectory: vi.fn(),
   createSource: vi.fn(),
   listSources: vi.fn(),
+  updateSource: vi.fn(),
 }))
 
 vi.mock('../publishers/publisherApi', () => ({
   listPublishers: vi.fn(),
+}))
+
+vi.mock('./connectorApi', () => ({
+  listConnectors: vi.fn(),
+}))
+
+vi.mock('./ingestionRunApi', () => ({
+  latestIngestionRun: vi.fn(),
+  synchronizeSource: vi.fn(),
 }))
 
 const publisher = {
@@ -18,18 +36,30 @@ const publisher = {
   name: 'GitHub Docs',
 }
 
+const connector = {
+  type: 'local-directory',
+  description: 'Reads supported documents from an allowed local directory.',
+}
+
 const source = {
   id: '53f81218-3017-4852-a65f-e68e79813436',
   publisherId: publisher.id,
-  connectorType: 'github' as const,
+  connectorType: connector.type,
   sourceKey: 'github-docs',
   name: 'GitHub Docs',
+  sourceUrl: 'file:///Users/alekseigrindev/Documents/github-docs',
 }
 
 beforeEach(() => {
+  vi.mocked(chooseLocalDirectory).mockReset()
   vi.mocked(createSource).mockReset()
   vi.mocked(listSources).mockReset()
+  vi.mocked(updateSource).mockReset()
   vi.mocked(listPublishers).mockReset()
+  vi.mocked(listConnectors).mockReset()
+  vi.mocked(latestIngestionRun).mockReset()
+  vi.mocked(synchronizeSource).mockReset()
+  vi.mocked(listConnectors).mockResolvedValue([connector])
 })
 
 async function openCreateDialog() {
@@ -47,6 +77,12 @@ function setValidValues(dialog: HTMLElement) {
   fireEvent.change(within(dialog).getByRole('textbox', { name: 'Source name' }), {
     target: { value: 'GitHub Docs' },
   })
+  fireEvent.change(
+    within(dialog).getByRole('textbox', { name: 'Local directory path' }),
+    {
+      target: { value: '/Users/alekseigrindev/Documents/github-docs' },
+    },
+  )
 }
 
 describe('SourceManagement', () => {
@@ -92,7 +128,7 @@ describe('SourceManagement', () => {
 
     expect(await screen.findByText('GitHub Docs')).toBeInTheDocument()
     expect(screen.getByText(/Publisher: GitHub Docs/)).toBeInTheDocument()
-    expect(screen.getByText('GitHub')).toBeInTheDocument()
+    expect(screen.getByText('local-directory')).toBeInTheDocument()
   })
 
   it('shows a request-error state when Source management cannot be loaded', async () => {
@@ -119,9 +155,9 @@ describe('SourceManagement', () => {
     ).toBeInTheDocument()
     expect(
       within(dialog).getByRole('combobox', { name: 'Connector' }),
-    ).toHaveValue('github')
+    ).toHaveValue('local-directory')
     expect(
-      within(dialog).getByRole('option', { name: 'GitHub' }),
+      within(dialog).getByRole('option', { name: 'local-directory' }),
     ).toBeInTheDocument()
   })
 
@@ -175,9 +211,10 @@ describe('SourceManagement', () => {
     ).toBeInTheDocument()
     expect(createSource).toHaveBeenCalledWith({
       publisherId: publisher.id,
-      connectorType: 'github',
+      connectorType: 'local-directory',
       sourceKey: 'github-docs',
       name: 'GitHub Docs',
+      sourceUrl: 'file:///Users/alekseigrindev/Documents/github-docs',
     })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })

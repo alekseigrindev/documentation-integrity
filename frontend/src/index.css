@@ -309,6 +309,10 @@ body {
 }
 
 .publisher-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 0.875rem 1rem;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -360,6 +364,35 @@ body {
   border-radius: 1rem;
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.source-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.source-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.source-sync-result {
+  max-width: 22rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  text-align: right;
+}
+
+.source-sync-result-succeeded {
+  color: #137333;
+}
+
+.source-sync-result-failed {
+  color: #b3261e;
 }
 
 .request-error {

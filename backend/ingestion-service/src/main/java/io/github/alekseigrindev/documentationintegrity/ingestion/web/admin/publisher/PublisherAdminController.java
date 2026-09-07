@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/publishers")
@@ -31,5 +32,17 @@ public class PublisherAdminController {
     @GetMapping
     public ResponseEntity<List<PublisherResponse>> getAll() {
         return ResponseEntity.ok(publisherMapper.toResponseList(publisherService.findAll()));
+    }
+
+    @PutMapping("/{publisherId}")
+    public ResponseEntity<PublisherResponse> update(
+            @PathVariable UUID publisherId,
+            @Valid @RequestBody PublisherRegistrationRequest request
+    ) {
+        return ResponseEntity.ok(publisherMapper.toResponse(
+                publisherService.update(
+                        publisherId, publisherMapper.toPublisherRegistration(request)
+                )
+        ));
     }
 }

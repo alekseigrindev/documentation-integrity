@@ -1,5 +1,6 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.connector;
 
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.github_online_docs.LocalGitVersionResolver;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;

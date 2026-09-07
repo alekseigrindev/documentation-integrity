@@ -1,5 +1,7 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.connector;
 
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.github_online_docs.GitHubCheckoutSourceScanner;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.github_online_docs.LocalGitVersionResolver;
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentType;
 import io.github.alekseigrindev.documentationintegrity.ingestion.importing.DocumentationImportProperties;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.Source;

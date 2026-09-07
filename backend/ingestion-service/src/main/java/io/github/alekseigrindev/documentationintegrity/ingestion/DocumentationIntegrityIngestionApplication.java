@@ -12,7 +12,11 @@ import java.time.Clock;
 public class DocumentationIntegrityIngestionApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DocumentationIntegrityIngestionApplication.class, args);
+        SpringApplication application = new SpringApplication(
+                DocumentationIntegrityIngestionApplication.class
+        );
+        application.setHeadless(false);
+        application.run(args);
     }
 
     @Bean

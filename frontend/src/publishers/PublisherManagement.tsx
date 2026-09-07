@@ -3,6 +3,7 @@ import {
   createPublisher,
   listPublishers,
   type Publisher,
+  updatePublisher,
 } from './publisherApi'
 
 function orderPublishers(publishers: Publisher[]) {
@@ -20,14 +21,27 @@ function PublisherManagement() {
   const [createFailed, setCreateFailed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
+  const [editingPublisher, setEditingPublisher] = useState<Publisher | null>(
+    null,
+  )
 
   useEffect(() => {
     listPublishers().then(setPublishers).catch(() => setLoadFailed(true))
   }, [])
 
   function openCreateModal() {
+    setPublisherName('')
     setValidationError(null)
     setCreateFailed(false)
+    setEditingPublisher(null)
+    setCreateOpen(true)
+  }
+
+  function openEditModal(publisher: Publisher) {
+    setPublisherName(publisher.name)
+    setValidationError(null)
+    setCreateFailed(false)
+    setEditingPublisher(publisher)
     setCreateOpen(true)
   }
 
@@ -40,9 +54,10 @@ function PublisherManagement() {
     setPublisherName('')
     setValidationError(null)
     setCreateFailed(false)
+    setEditingPublisher(null)
   }
 
-  async function handleCreate(event: FormEvent<HTMLFormElement>) {
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const name = publisherName.trim()
@@ -56,7 +71,9 @@ function PublisherManagement() {
     setSubmitting(true)
 
     try {
-      const publisher = await createPublisher({ name })
+      const publisher = editingPublisher
+        ? await updatePublisher(editingPublisher.id, { name })
+        : await createPublisher({ name })
       setPublishers((current) =>
         orderPublishers([
           ...(current ?? []).filter((item) => item.id !== publisher.id),
@@ -64,6 +81,7 @@ function PublisherManagement() {
         ]),
       )
       setPublisherName('')
+      setEditingPublisher(null)
       setCreateOpen(false)
     } catch {
       setCreateFailed(true)
@@ -71,6 +89,8 @@ function PublisherManagement() {
       setSubmitting(false)
     }
   }
+
+  const isEditing = editingPublisher !== null
 
   return (
     <section
@@ -108,7 +128,16 @@ function PublisherManagement() {
         ) : (
           <ul className="publisher-list" aria-label="Publishers">
             {publishers.map((publisher) => (
-              <li key={publisher.id}>{publisher.name}</li>
+              <li key={publisher.id}>
+                <span>{publisher.name}</span>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => openEditModal(publisher)}
+                >
+                  Edit
+                </button>
+              </li>
             ))}
           </ul>
         )}
@@ -120,7 +149,7 @@ function PublisherManagement() {
             className="modal-dialog"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="create-publisher-title"
+            aria-labelledby="publisher-dialog-title"
             onKeyDown={(event) => {
               if (event.key === 'Escape') {
                 closeCreateModal()
@@ -128,11 +157,13 @@ function PublisherManagement() {
             }}
           >
             <div className="modal-header">
-              <h3 id="create-publisher-title">Create Publisher</h3>
+              <h3 id="publisher-dialog-title">
+                {isEditing ? 'Edit Publisher' : 'Create Publisher'}
+              </h3>
               <button
                 className="icon-button"
                 type="button"
-                aria-label="Close create Publisher dialog"
+                aria-label="Close Publisher dialog"
                 disabled={submitting}
                 onClick={closeCreateModal}
               >
@@ -140,7 +171,7 @@ function PublisherManagement() {
               </button>
             </div>
 
-            <form className="publisher-form" onSubmit={handleCreate}>
+            <form className="publisher-form" onSubmit={handleSave}>
               <label htmlFor="publisher-name">Publisher name</label>
               <input
                 id="publisher-name"
@@ -165,7 +196,9 @@ function PublisherManagement() {
               ) : null}
               {createFailed ? (
                 <p className="request-error" role="alert">
-                  Unable to create Publisher. Try again.
+                  {isEditing
+                    ? 'Unable to update Publisher. Try again.'
+                    : 'Unable to create Publisher. Try again.'}
                 </p>
               ) : null}
 
@@ -183,7 +216,13 @@ function PublisherManagement() {
                   type="submit"
                   disabled={submitting}
                 >
-                  {submitting ? 'Creating…' : 'Create Publisher'}
+                  {submitting
+                    ? isEditing
+                      ? 'Saving…'
+                      : 'Creating…'
+                    : isEditing
+                      ? 'Save Publisher'
+                      : 'Create Publisher'}
                 </button>
               </div>
             </form>

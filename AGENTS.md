@@ -40,6 +40,11 @@
 
 ## Milestone, Task, and Commit Decomposition
 
+- Every new milestone starts with task 0 (`M6T0`, `M7T0`, and so on). Task 0
+  is the explicit planning and scope-freezing task: it defines the milestone's
+  concrete outcome and acceptance evidence, decomposes it into delivery tasks,
+  and records the boundaries of each task. It contains no product
+  implementation. Begin task 1 only after task 0 is accepted.
 - Define a milestone by one verifiable user or operator outcome. Decompose it
   into separate tasks only when a task delivers independently useful behavior,
   resolves material uncertainty or risk, can be accepted independently, has a

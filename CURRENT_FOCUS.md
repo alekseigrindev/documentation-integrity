@@ -35,12 +35,13 @@ records typical and slow search latency.
 | Task | Plain outcome | Status |
 | --- | --- | --- |
 | M6.0 Milestone definition | The team agrees the M6 outcome, acceptance evidence, delivery tasks, and boundaries before implementation begins. | Completed 2026-09-08 |
-| M6.1 Citable lexical search in the browser | A user enters a documentation query and sees matching passages with their source citation. | Planned |
+| M6.1 Citable lexical search in the browser | A user enters a documentation query and sees matching passages with their source citation. | Completed 2026-09-08 |
 | M6.2 Measured retrieval selection | An operator compares retrieval methods on the agreed cases and retains the best measured method. | Planned |
+| M6.3 Milestone finalization | The M6 user and operator stories work without known M6 defects or usability blockers. | Planned |
 
 ## Active Task
 
-None. M6T0 is complete; begin M6T1 next.
+None. M6T1 is complete; begin M6T2 next.
 
 ### M6T1 — Citable lexical search in the browser
 
@@ -74,6 +75,31 @@ replaces lexical only when it meets the agreed selection rule above.
 **Boundaries:** No new user-facing search controls, diagnosis, chat, gRPC,
 additional connectors, or release-quality claims. Building the 30-case release
 evaluation set belongs to M8.
+
+### M6T3 — Milestone finalization
+
+**Proposed branch:** `feature/m6t3-retrieval-finalization`
+
+**User and operator scenario:** After M6T1 and M6T2, the developer can search
+synchronized documentation with citations, and the operator can run the agreed
+retrieval comparison, without known M6 defects or usability blockers.
+
+The operator can also inspect each successful ingestion run and see its added
+and removed document and chunk counts.
+
+**What proves it is done:** Every recorded M6 finding is resolved or explicitly
+deferred, then the M6 browser search and 12-case retrieval comparison are run
+again successfully. A controlled successful sync that adds and removes known
+documents shows matching added and removed document and chunk counts in
+**Ingestion runs**.
+
+**Boundaries:** Include only fixes, small usability improvements, and
+acceptance-evidence corrections discovered in M6. Do not add new retrieval
+capabilities, change the agreed quality gate, add chat, or make unrelated
+refactors. The ingestion improvement adds only four successful-run counters:
+documents added, documents removed, chunks added, and chunks removed. Failed
+runs continue to show a safe failure result without change counts; no
+per-document audit history is added.
 
 ### What Proves M6T0 Is Done
 

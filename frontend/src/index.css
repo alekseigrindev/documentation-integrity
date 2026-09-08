@@ -104,7 +104,8 @@ body {
 
 .publisher-management,
 .source-management,
-.ingestion-run-management {
+.ingestion-run-management,
+.search-management {
   width: 100%;
   max-width: 64rem;
 }
@@ -147,7 +148,8 @@ body {
 }
 
 .publisher-form label,
-.source-form label {
+.source-form label,
+.search-form label {
   display: block;
   margin-bottom: 0.5rem;
   color: #3c4043;
@@ -157,7 +159,8 @@ body {
 
 .publisher-form input,
 .source-form input,
-.source-form select {
+.source-form select,
+.search-form input {
   width: 100%;
   min-height: 2.5rem;
   padding: 0.5rem 0.75rem;
@@ -170,7 +173,8 @@ body {
 
 .publisher-form input:focus,
 .source-form input:focus,
-.source-form select:focus {
+.source-form select:focus,
+.search-form input:focus {
   border-color: #0b57d0;
   outline: 2px solid rgb(11 87 208 / 20%);
   outline-offset: 1px;
@@ -211,7 +215,8 @@ body {
 .icon-button:disabled,
 .publisher-form input:disabled,
 .source-form input:disabled,
-.source-form select:disabled {
+.source-form select:disabled,
+.search-form input:disabled {
   cursor: default;
   opacity: 0.65;
 }
@@ -277,6 +282,63 @@ body {
 
 .source-form {
   padding: 1.5rem;
+}
+
+.search-form {
+  margin-top: 1.5rem;
+}
+
+.search-input-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.search-input-row input {
+  flex: 1;
+}
+
+.search-results {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-results li {
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.75rem;
+}
+
+.search-result-content {
+  margin: 0;
+  color: #202124;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.search-result-citation {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  color: #5f6368;
+  border-top: 1px solid #e0e0e0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.search-result-citation p {
+  margin: 0.25rem 0 0;
+}
+
+.search-result-citation p:first-child {
+  margin-top: 0;
+}
+
+.search-result-citation a {
+  color: #0b57d0;
 }
 
 .source-form label:not(:first-child) {
@@ -498,5 +560,9 @@ body {
 
   .section-heading .primary-button {
     align-self: flex-start;
+  }
+
+  .search-input-row {
+    flex-direction: column;
   }
 }

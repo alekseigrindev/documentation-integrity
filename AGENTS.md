@@ -45,6 +45,11 @@
   concrete outcome and acceptance evidence, decomposes it into delivery tasks,
   and records the boundaries of each task. It contains no product
   implementation. Begin task 1 only after task 0 is accepted.
+- Every milestone ends with a named finalization task. It contains only fixes,
+  small usability improvements, and acceptance-evidence corrections discovered
+  while delivering that milestone. It re-runs the milestone acceptance story
+  after those corrections. Do not use it for new capabilities, changed product
+  scope, or unrelated refactoring.
 - Define a milestone by one verifiable user or operator outcome. Decompose it
   into separate tasks only when a task delivers independently useful behavior,
   resolves material uncertainty or risk, can be accepted independently, has a

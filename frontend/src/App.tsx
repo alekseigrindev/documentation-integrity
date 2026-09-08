@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import Navigation from './Navigation'
-import type { AdministrationSection } from './Navigation'
+import type { ApplicationSection } from './Navigation'
+import DocumentationSearch from './search/DocumentationSearch'
 import PublisherManagement from './publishers/PublisherManagement'
 import IngestionRuns from './ingestion-runs/IngestionRuns'
 import SourceManagement from './sources/SourceManagement'
 
 function App() {
   const [activeSection, setActiveSection] =
-    useState<AdministrationSection>('sources')
+    useState<ApplicationSection>('search')
 
   return (
     <div className="app">
@@ -25,6 +26,7 @@ function App() {
         />
 
         <main className="main-content">
+          {activeSection === 'search' ? <DocumentationSearch /> : null}
           {activeSection === 'sources' ? <SourceManagement /> : null}
           {activeSection === 'publishers' ? <PublisherManagement /> : null}
           {activeSection === 'ingestion-runs' ? <IngestionRuns /> : null}

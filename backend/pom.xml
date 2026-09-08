@@ -34,8 +34,8 @@
 
     <modules>
         <module>api-service</module>
-        <!-- <module>retrive-service</module> -->
         <module>ingestion-service</module>
+        <!-- <module>retrive-service</module> -->
         <!-- <module>contracts</module> -->
         <!-- <module>evaluation</module> -->
     </modules>

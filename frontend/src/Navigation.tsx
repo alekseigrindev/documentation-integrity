@@ -1,14 +1,37 @@
-export type AdministrationSection = 'sources' | 'publishers' | 'ingestion-runs'
+export type ApplicationSection =
+  | 'search'
+  | 'sources'
+  | 'publishers'
+  | 'ingestion-runs'
 
 type NavigationProps = {
-  activeSection: AdministrationSection
-  onSectionSelect: (section: AdministrationSection) => void
+  activeSection: ApplicationSection
+  onSectionSelect: (section: ApplicationSection) => void
 }
 
 function Navigation({ activeSection, onSectionSelect }: NavigationProps) {
   return (
     <aside className="sidebar">
-      <nav aria-label="Administration">
+      <nav aria-label="Application">
+        <button
+          className={
+            activeSection === 'search'
+              ? 'navigation-item navigation-item-active'
+              : 'navigation-item'
+          }
+          type="button"
+          aria-pressed={activeSection === 'search'}
+          onClick={() => onSectionSelect('search')}
+        >
+          <svg
+            className="navigation-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="m20.71 19.29-4.17-4.17A7.5 7.5 0 1 0 15.12 16l4.17 4.17 1.42-.88ZM5 10a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z" />
+          </svg>
+          <span>Search</span>
+        </button>
         <button
           className={
             activeSection === 'sources'

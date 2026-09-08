@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,11 +39,14 @@ public class IngestionRunAdminController {
     }
 
     @GetMapping
-    public List<IngestionRunResponse> findBySource(
-            @RequestParam UUID sourceId
+    @Transactional(readOnly = true)
+    public List<IngestionRunResponse> find(
+            @RequestParam(required = false) UUID sourceId
     ) {
-        return ingestionRunMapper.toResponses(
-                ingestionRunService.findBySource(sourceId)
-        );
+        List<IngestionRun> runs = sourceId == null
+                ? ingestionRunService.findAll()
+                : ingestionRunService.findBySource(sourceId);
+
+        return ingestionRunMapper.toResponses(runs);
     }
 }

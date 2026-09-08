@@ -8,14 +8,27 @@ import java.util.Arrays;
 
 @Getter
 public enum ConnectorType {
-    GITHUB("github", "For GitHub sources");
+    GITHUB(
+            "github-online-docs",
+            "For GitHub documentation sources",
+            false),
+    LOCAL_DIRECTORY(
+            "local-directory",
+            "Reads supported documents from an allowed local directory",
+            true)
+    ;
 
     private final String alias;
     private final String description;
+    private final boolean active;
 
-    ConnectorType(String alias, String description) {
+    ConnectorType(
+            String alias,
+            String description,
+            boolean active) {
         this.alias = alias;
         this.description = description;
+        this.active = active;
     }
 
     @JsonCreator
@@ -25,7 +38,7 @@ public enum ConnectorType {
         }
 
         return Arrays.stream(values())
-                .filter(type -> type.alias.equalsIgnoreCase(alias.strip()))
+                .filter(type -> type.alias.equals(alias.strip()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Unsupported connector type: " + alias

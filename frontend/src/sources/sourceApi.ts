@@ -1,4 +1,4 @@
-export type ConnectorType = 'github'
+export type ConnectorType = string
 
 export type Source = {
   id: string
@@ -18,6 +18,11 @@ export type CreateSourceRequest = {
   connectorType: ConnectorType
   sourceKey: string
   name: string
+  sourceUrl?: string
+}
+
+type LocalDirectorySelectionResponse = {
+  sourceUrl: string | null
 }
 
 export class SourceApiError extends Error {
@@ -74,4 +79,47 @@ export async function createSource(
   }
 
   return (await response.json()) as Source
+}
+
+export async function updateSource(
+  sourceId: string,
+  request: CreateSourceRequest,
+): Promise<Source> {
+  const response = await fetch(`/api/admin/sources/${sourceId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  }).catch(() => {
+    throw new SourceApiError('Unable to reach the Source API', 'network')
+  })
+
+  if (response.status !== 200) {
+    throw new SourceApiError(
+      `Source API returned status ${response.status}`,
+      'http',
+      response.status,
+    )
+  }
+
+  return (await response.json()) as Source
+}
+
+export async function chooseLocalDirectory(): Promise<string | null> {
+  const response = await fetch('/api/admin/local-directories/choose', {
+    method: 'POST',
+  }).catch(() => {
+    throw new SourceApiError('Unable to reach the Source API', 'network')
+  })
+
+  if (response.status !== 200) {
+    throw new SourceApiError(
+      `Source API returned status ${response.status}`,
+      'http',
+      response.status,
+    )
+  }
+
+  return ((await response.json()) as LocalDirectorySelectionResponse).sourceUrl
 }

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import jakarta.persistence.LockModeType;
@@ -58,4 +59,21 @@ public interface DocumentationDocumentRepository extends JpaRepository<Documenta
         ON CONFLICT (source_id, product_variant, source_locator) DO NOTHING
         """, nativeQuery = true)
     int insertIfAbsent(@Param("document") DocumentationDocument document);
+
+    @Modifying
+    @Query(value = """
+        DELETE FROM knowledge.documents
+        WHERE source_id = :sourceId
+          AND id NOT IN (:retainedDocumentIds)
+        """, nativeQuery = true)
+    void deleteDocumentsMissingFromScan(
+            @Param("sourceId") UUID sourceId,
+            @Param("retainedDocumentIds") Set<UUID> retainedDocumentIds);
+
+    @Modifying
+    @Query(value = """
+        DELETE FROM knowledge.documents
+        WHERE source_id = :sourceId
+        """, nativeQuery = true)
+    void deleteAllBySourceId(@Param("sourceId") UUID sourceId);
 }

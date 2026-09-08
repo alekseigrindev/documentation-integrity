@@ -69,3 +69,30 @@ export async function listPublishers(): Promise<Publisher[]> {
     return (await response.json()) as Publisher[]
 }
 
+export async function updatePublisher(
+    publisherId: string,
+    request: CreatePublisherRequest,
+): Promise<Publisher> {
+    const response = await fetch(`/api/admin/publishers/${publisherId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+    }).catch(() => {
+        throw new PublisherApiError(
+            'Unable to reach the Publisher API',
+            'network',
+        )
+    })
+
+    if (response.status !== 200) {
+        throw new PublisherApiError(
+            `Publisher API returned status ${response.status}`,
+            'http',
+            response.status,
+        )
+    }
+
+    return (await response.json()) as Publisher
+}

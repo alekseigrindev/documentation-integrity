@@ -1,5 +1,8 @@
-package io.github.alekseigrindev.documentationintegrity.ingestion.connector;
+package io.github.alekseigrindev.documentationintegrity.ingestion.connector.github_online_docs;
 
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.AcquiredDocument;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.ConnectorType;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.SourceScanner;
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentType;
 import io.github.alekseigrindev.documentationintegrity.ingestion.importing.DocumentationImportProperties;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.Source;

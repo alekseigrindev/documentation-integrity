@@ -16,6 +16,20 @@
 - Keep source-specific acquisition behind a connector-neutral application
   boundary and store the current successfully indexed document state in v1.
 
+## Delivery Authorization
+
+This document records implemented choices, v1 release targets, and conditional
+architecture candidates. It is not an implementation queue. `CURRENT_FOCUS.md`
+defines the active milestone and is the authority for work that may begin now.
+
+A target technology enters implementation only when it is required by the
+active user or operator outcome, has an acceptance criterion, and can produce
+executable evidence. Internal portfolio value alone is not sufficient.
+
+Kafka and gRPC are conditional adoption decisions. Their presence in diagrams,
+rationale, or the target stack does not make them v1 completion criteria unless
+an active milestone explicitly retains and proves their role.
+
 ## Implementation Status
 
 | Area | Choice | Status |
@@ -23,38 +37,42 @@
 | Primary language and runtime | Java 25 | Implemented |
 | Application framework | Spring Boot 4.1.0; Spring AI 2.0.0 target | Boot application implemented; Spring AI pending |
 | Backend build | Maven reactor | Implemented; Maven Wrapper pending |
-| Web client | React + TypeScript | Target |
-| Repository layout | `backend/`, `frontend/`, `infra/`, `docs/` | Backend, infrastructure, and docs present; frontend pending |
+| Web client | React + TypeScript | Publisher and Source management implemented; Source synchronization active in M5 |
+| Repository layout | `backend/`, `frontend/`, `infra/`, `docs/` | Backend, infrastructure, docs, and frontend foundation present |
 | Local infrastructure | Docker Compose | Implemented |
 | Transactional/vector storage | PostgreSQL 17 + pgvector | Container verified |
 | Schema migrations | Flyway | Implemented and integration-tested |
 | Lexical search | PostgreSQL FTS + GIN | Implemented and integration-tested |
-| Vector search | pgvector + HNSW | Target |
-| Chat model | `qwen3:8b` via host Ollama | Target |
-| Embedding model | `nomic-embed-text` via ONNX Runtime | Target |
-| Reranker | `bge-reranker-v2-m3` via ONNX Runtime | Target |
-| Async ingestion | Apache Kafka | Container verified; application boundary pending |
-| Internal RPC | gRPC + protobuf | Target after retrieval boundary exists |
+| Vector search | pgvector + HNSW | Planned for measurable retrieval; not active |
+| Chat model | `qwen3:8b` via host Ollama | Planned for diagnosis; not active |
+| Embedding model | `nomic-embed-text` via ONNX Runtime | Planned for measurable retrieval; not active |
+| Reranker | `bge-reranker-v2-m3` via ONNX Runtime | Planned after a measured hybrid baseline; not active |
+| Async ingestion | Apache Kafka | Container verified; application use is a conditional source-synchronization decision |
+| Internal RPC | gRPC + protobuf | Conditional decision after an in-process retrieval boundary is measured |
 | Testing | JUnit 5, AssertJ, Testcontainers | Implemented for current ingestion slice |
-| Observability | Micrometer + OpenTelemetry | Target |
-| CI | GitHub Actions | Next |
-| Initial corpus | `github/docs` Actions content + referenced data | Selected |
+| Observability | Micrometer + OpenTelemetry | Planned only where milestone acceptance requires measured behavior |
+| CI | GitHub Actions | Planned; not active |
+| Initial corpus | `github/docs` Actions content + referenced data | Selected; complete processing is planned, not active |
 | Source acquisition | Local directory + file upload behind one connector contract | Implemented and integration-tested for single-document synchronization |
 
 ## Incremental Architecture
 
-1. Build one executable `api-service` with health/readiness and a reproducible
-   Maven build.
-2. Add PostgreSQL ownership through Flyway and Testcontainers.
-3. Prove one synchronous ingestion-to-answer vertical slice with a synthetic
-   fixture shaped like the selected GitHub Actions corpus.
-4. Prove connector neutrality with local-directory and file-upload adapters
-   that emit the same normalized document contract.
-5. Extract a typed retrieval boundary and introduce protobuf/gRPC when
-   independent scaling and latency instrumentation can be demonstrated.
-6. Introduce Kafka when ingestion becomes asynchronous; ship idempotency,
-   retries, dead-letter handling, and consumer metrics with it.
-7. Add the React chat after the public API contract is stable.
+1. Keep the existing executable backend, PostgreSQL/Flyway ownership, lexical
+   lookup, and connector-neutral current-state ingestion as the verified
+   baseline.
+2. Establish a minimal React and TypeScript application shell before adding
+   product behavior.
+3. Deliver Publisher, Source, and source-synchronization behavior as separate
+   vertical slices, each with backend, frontend, tests, and acceptance evidence.
+4. Introduce Kafka only if the active synchronization slice requires durable
+   asynchronous handoff; ship idempotency, retries, dead-letter behavior, and
+   metrics with that decision.
+5. Build measurable lexical, vector, hybrid, and reranked retrieval behind an
+   in-process typed contract first.
+6. Extract a physical retrieval service and introduce protobuf/gRPC only if an
+   ADR demonstrates a boundary that must scale or fail independently.
+7. Grow the frontend shell into retrieval inspection and diagnostic chat in
+   the same milestones as the corresponding backend behavior.
 
 Empty service directories are not considered implemented services.
 
@@ -88,16 +106,19 @@ benchmarks, and an explicit reconsideration trigger.
 
 ### Kafka
 
-Ingestion is long-running, retryable, and bursty. Kafka provides durable work
-handoff, replay, backpressure, and failure isolation.
+Kafka is the selected candidate if source ingestion demonstrates a need for
+durable work handoff, replay, backpressure, and failure isolation. The
+synchronous source path remains the baseline until that need is proven in the
+active milestone.
 
 Required evidence: versioned event contract, idempotency key, partition-key
 rationale, retry/DLT policy, duplicate-delivery test, and consumer-lag metric.
 
 ### gRPC
 
-Retrieval and local inference form a typed, latency-sensitive internal boundary
-that may scale independently from the public API.
+gRPC is the selected candidate if retrieval and local inference demonstrate a
+typed, latency-sensitive boundary that must scale or fail independently from
+the public API. An in-process typed contract is the baseline.
 
 Required evidence: versioned protobuf, deadlines, status mapping, health
 behavior, tracing, and compatibility tests. A service split must be justified
@@ -153,9 +174,11 @@ logic rather than framework configuration.
   secret-bearing. Do not persist or log their raw content by default.
 - Bound source-file size, include-expansion depth, parsing concurrency, and
   supported content types.
-- Propagate correlation IDs and deadlines across REST, Kafka, and gRPC.
+- Propagate correlation IDs and deadlines across REST and across Kafka or gRPC
+  when those boundaries are introduced.
 - Define health/readiness separately from dependency availability.
-- Make ingestion safe under retries and duplicate Kafka delivery.
+- If Kafka delivery is introduced, make ingestion safe under retries and
+  duplicate delivery.
 - Never describe the system as production-ready, scalable, accurate, or secure
   without bounded evidence.
 
@@ -163,8 +186,10 @@ logic rather than framework configuration.
 
 - Unit tests for connector normalization, source rendering, request-context
   extraction, chunking, fusion, thresholds, and citation assembly.
-- Testcontainers integration tests for PostgreSQL/pgvector, Flyway, and Kafka.
-- Contract compatibility tests for protobuf and public API schemas.
+- Testcontainers integration tests for PostgreSQL/pgvector and Flyway, plus
+  Kafka when Kafka enters the active milestone.
+- Contract compatibility tests for public API schemas and for protobuf if a
+  gRPC boundary is introduced.
 - End-to-end test using a small legally usable fixture corpus.
 - Versioned offline evaluation covering retrieval, ranking, citation support,
   abstention, latency, and adversarial document content.

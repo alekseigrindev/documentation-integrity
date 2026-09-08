@@ -1,5 +1,7 @@
 package io.github.alekseigrindev.documentationintegrity.ingestion.publisher;
 
+import io.github.alekseigrindev.documentationintegrity.ingestion.command.PublisherRegistration;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,5 +47,26 @@ public class PublisherService {
         return publisherRepository.findAllByOrderByNameAscIdAsc();
     }
 
+    @Transactional
+    public Publisher update(UUID publisherId, PublisherRegistration publisherRegistration) {
+        String normalizedName = publisherRegistration.name().strip();
 
+        Publisher publisher = publisherRepository.findById(publisherId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Publisher not found: " + publisherId
+                ));
+
+        publisherRepository.findByName(normalizedName)
+                .filter(existing -> !existing.getId().equals(publisherId))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException(
+                            "Publisher name is already in use: " + normalizedName
+                    );
+                });
+
+        publisher.rename(normalizedName);
+
+        return publisher;
+
+    }
 }

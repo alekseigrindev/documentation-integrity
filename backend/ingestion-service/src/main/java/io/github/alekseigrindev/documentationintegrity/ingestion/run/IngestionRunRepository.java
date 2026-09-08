@@ -8,4 +8,6 @@ import java.util.List;
 public interface IngestionRunRepository extends JpaRepository<IngestionRun, UUID> {
 
     List<IngestionRun> findBySourceIdOrderByStartedAtDescIdDesc(UUID sourceId);
+
+    List<IngestionRun> findAllByOrderByStartedAtDescIdDesc();
 }

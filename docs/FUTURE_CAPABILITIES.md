@@ -16,15 +16,9 @@ sources and ingestion evidence.
 **Implementation trigger:** Publisher deletion is exposed as an operator
 workflow and the behavior of active sources owned by that publisher is defined.
 
-**Expected behavior:** Add an `is_deleted` flag with a default value of
-`false`. Soft-deleted publishers are excluded from normal active-publisher
-queries and cannot be assigned to new sources. Before implementation, define
-whether existing sources are blocked, disabled, or remain readable, and define
-how publisher-name uniqueness and restoration behave after deletion.
-
 **Why deferred:** The current Publisher slice only creates publisher identity.
-Adding an unused flag before deletion and source-reference behavior exist would
-store state with no enforceable meaning.
+Designing storage and restoration semantics before a deletion workflow exists
+would add state with no enforceable meaning.
 
 ## Authenticated Jira Connector
 
@@ -61,17 +55,17 @@ represented by optional document-level upstream-version metadata.
 **Why deferred:** A mandatory `SourceRevision` imposes Git-like global
 versioning on sources whose documents change independently.
 
-## Corpus Snapshots
+## Corpus Snapshots and Atomic Rollback
 
 **User problem:** Search must never mix documents from different acquisition
-runs, or an operator needs atomic corpus rollback.
+runs, or an operator needs to activate and roll back a complete corpus as one
+unit.
 
 **Implementation trigger:** Ingestion and search run concurrently, multiple
 operators update one source, or a measured rollback requirement appears.
 
-**Why deferred:** v1 ingestion and search are manually sequenced. `STAGING`,
-`ACTIVE`, and `RETIRED` state machinery would add storage, query filtering, and
-lifecycle complexity without changing the current user outcome.
+**Why deferred:** v1 ingestion and search are manually sequenced. Snapshot
+lifecycle and rollback machinery would not change the current user outcome.
 
 ## Historical Document Versions
 
@@ -85,42 +79,18 @@ source is unavailable or fails a measured latency or reliability requirement.
 state. Retaining every derived version would duplicate upstream history before
 historical comparison is implemented.
 
-## Ingestion Run Operations
+## Advanced Ingestion Run Operations
 
-**User problem:** An operator needs a reliable, safe history of imports when
-sources contain many documents or ingestion becomes asynchronous.
+**User problem:** An operator needs reliable recovery and usable history when
+ingestion runs become numerous, long-lived, or asynchronous.
 
-**Implementation trigger:** A connector imports more than one document per
-operation, run history becomes large enough to impede inspection, or Kafka
-introduces worker interruption and delayed delivery.
-
-**Expected behavior:** Expire or explicitly fail stale `RUNNING` records using
-a documented worker lease or timeout; expose run history through cursor-based
-pagination; and return only sanitized operator diagnostics. Raw exception
-details, filesystem paths, signed URLs, and credentials must not be persisted
-or exposed through the run API.
+**Implementation trigger:** Measured run history requires pagination, an
+interrupted worker leaves stale state, or an accepted asynchronous boundary
+requires explicit recovery semantics.
 
 **Why deferred:** Current imports are synchronous and manually initiated. The
-existing source-level audit fields identify each attempt without requiring
-background recovery machinery or a paginated operational UI.
-
-## Ingestion Run Lifecycle Constraints
-
-**User problem:** Operators and automated workers need a single, proven
-definition of valid ingestion-run states and their permitted transitions.
-
-**Implementation trigger:** A source-wide connector, Kafka consumer, retry
-policy, or stale-run recovery workflow demonstrates the required lifecycle and
-the semantics of partial failure.
-
-**Expected behavior:** Define the lifecycle states, terminal-state fields,
-failure-code vocabulary, and transition rules. Add PostgreSQL `CHECK`
-constraints only after the application behavior and operational recovery model
-are covered by integration tests.
-
-**Why deferred:** The current MVP has no validated source-wide run lifecycle.
-Database constraints would freeze assumptions about status values and failure
-semantics before real connectors establish the correct contract.
+advanced lifecycle and storage constraints are selected only after those
+behaviors are demonstrated.
 
 ## Source and Ingestion Run Document-Type Selection
 
@@ -132,26 +102,6 @@ formats are scanned in a particular synchronization run.
 document processors and has an executable scan fixture containing mixed file
 types.
 
-**Expected behavior:** Store a source-level default allowlist of
-`DocumentType` values. A future `POST /api/admin/ingestion-runs` request may
-provide an optional document-type selection. When omitted, the run uses the
-source default; when provided, it replaces that default for the run and may be
-narrower or broader. Every requested type must be supported by an installed
-document processor. Persist the effective type selection with the run so
-operational history explains its scope. A run never mutates source defaults.
-
-**Why deferred:** The MVP supports Markdown only and does not yet have a
-source-wide scan or a second document processor. Adding allowlist persistence
-and request overrides now would create configuration without executable
-behavior.
-
-## Atomic Snapshot Activation and Rollback
-
-**User problem:** A complete new corpus must become visible at once, and the
-previous corpus must remain immediately recoverable.
-
-**Implementation trigger:** Concurrent production search during ingestion or a
-bounded recovery-time requirement makes per-document replacement insufficient.
-
-**Why deferred:** The v1 operator starts search only after manual ingestion has
-completed and been verified.
+**Why deferred:** V1 intentionally supports only Markdown and plain text.
+Designing persisted selections and request overrides before a second processor
+exists would create configuration without executable behavior.

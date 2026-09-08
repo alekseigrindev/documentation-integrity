@@ -22,4 +22,8 @@ public class Publisher {
 
     @Column(nullable = false)
     private String name;
+
+    public void rename(String name) {
+        this.name = name;
+    }
 }

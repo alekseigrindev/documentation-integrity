@@ -1,16 +1,18 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import PublisherManagement from './PublisherManagement'
-import { createPublisher, listPublishers } from './publisherApi'
+import { createPublisher, listPublishers, updatePublisher } from './publisherApi'
 
 vi.mock('./publisherApi', () => ({
   createPublisher: vi.fn(),
   listPublishers: vi.fn(),
+  updatePublisher: vi.fn(),
 }))
 
 beforeEach(() => {
   vi.mocked(createPublisher).mockReset()
   vi.mocked(listPublishers).mockReset()
+  vi.mocked(updatePublisher).mockReset()
 })
 
 async function openCreateDialog() {
@@ -58,8 +60,8 @@ describe('PublisherManagement', () => {
     const items = await screen.findAllByRole('listitem')
 
     expect(items.map((item) => item.textContent)).toEqual([
-      'Alpha Documentation',
-      'Zulu Documentation',
+      'Alpha DocumentationEdit',
+      'Zulu DocumentationEdit',
     ])
   })
 

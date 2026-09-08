@@ -103,7 +103,8 @@ body {
 }
 
 .publisher-management,
-.source-management {
+.source-management,
+.ingestion-run-management {
   width: 100%;
   max-width: 64rem;
 }
@@ -309,6 +310,10 @@ body {
 }
 
 .publisher-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 0.875rem 1rem;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -326,6 +331,30 @@ body {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.ingestion-run-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingestion-run-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ingestion-run-list li:first-child {
+  padding-top: 0;
+}
+
+.ingestion-run-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .source-list li {
@@ -352,6 +381,49 @@ body {
   font-size: 0.8125rem;
 }
 
+.ingestion-run-details,
+.ingestion-run-failure {
+  margin: 0.375rem 0 0;
+  color: #5f6368;
+  font-size: 0.8125rem;
+}
+
+.ingestion-run-outcome {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.ingestion-run-status {
+  padding: 0.25rem 0.625rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.ingestion-run-status-succeeded {
+  color: #137333;
+  background: #e6f4ea;
+}
+
+.ingestion-run-status-failed {
+  color: #b3261e;
+  background: #fce8e6;
+}
+
+.ingestion-run-status-running {
+  color: #174ea6;
+  background: #e8f0fe;
+}
+
+.ingestion-run-failure {
+  max-width: 22rem;
+  color: #b3261e;
+  text-align: right;
+}
+
 .connector-badge {
   flex: 0 0 auto;
   padding: 0.25rem 0.625rem;
@@ -360,6 +432,35 @@ body {
   border-radius: 1rem;
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.source-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.source-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.source-sync-result {
+  max-width: 22rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  text-align: right;
+}
+
+.source-sync-result-succeeded {
+  color: #137333;
+}
+
+.source-sync-result-failed {
+  color: #b3261e;
 }
 
 .request-error {

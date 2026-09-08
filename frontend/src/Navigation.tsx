@@ -1,4 +1,4 @@
-export type AdministrationSection = 'sources' | 'publishers'
+export type AdministrationSection = 'sources' | 'publishers' | 'ingestion-runs'
 
 type NavigationProps = {
   activeSection: AdministrationSection
@@ -46,6 +46,25 @@ function Navigation({ activeSection, onSectionSelect }: NavigationProps) {
             <path d="M5 3h14a2 2 0 0 1 2 2v16H3V5a2 2 0 0 1 2-2Zm2 4v2h2V7H7Zm4 0v2h2V7h-2Zm4 0v2h2V7h-2ZM7 12v2h2v-2H7Zm4 0v2h2v-2h-2Zm4 0v2h2v-2h-2ZM9 17v4h6v-4H9Z" />
           </svg>
           <span>Publishers</span>
+        </button>
+        <button
+          className={
+            activeSection === 'ingestion-runs'
+              ? 'navigation-item navigation-item-active'
+              : 'navigation-item'
+          }
+          type="button"
+          aria-pressed={activeSection === 'ingestion-runs'}
+          onClick={() => onSectionSelect('ingestion-runs')}
+        >
+          <svg
+            className="navigation-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 11H7v-2h4V6h2Z" />
+          </svg>
+          <span>Ingestion runs</span>
         </button>
       </nav>
     </aside>

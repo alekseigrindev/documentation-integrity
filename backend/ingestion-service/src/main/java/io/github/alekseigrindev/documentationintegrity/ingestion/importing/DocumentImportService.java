@@ -4,8 +4,9 @@ import io.github.alekseigrindev.documentationintegrity.ingestion.command.LocalDo
 import io.github.alekseigrindev.documentationintegrity.ingestion.command.UploadedDocumentImportCommand;
 import io.github.alekseigrindev.documentationintegrity.ingestion.connector.AcquiredDocument;
 import io.github.alekseigrindev.documentationintegrity.ingestion.connector.DocumentConnector;
-import io.github.alekseigrindev.documentationintegrity.ingestion.connector.FileUploadDocumentConnector;
-import io.github.alekseigrindev.documentationintegrity.ingestion.connector.LocalDirectoryDocumentConnector;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.local_directory.FileUploadDocumentConnector;
+import io.github.alekseigrindev.documentationintegrity.ingestion.connector.local_directory.LocalDirectoryDocumentConnector;
+import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocumentRepository;
 import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRunService;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.Source;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.SourceRepository;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -29,6 +31,7 @@ public class DocumentImportService {
     private final DocumentPreparationService documentPreparationService;
     private final DocumentStateWriter documentStateWriter;
     private final IngestionRunService ingestionRunService;
+    private final DocumentationDocumentRepository documentRepository;
     private final Clock clock;
 
     public DocumentImportResult importFromLocalDirectory(
@@ -90,6 +93,14 @@ public class DocumentImportService {
         } catch (RuntimeException exception) {
             ingestionRunService.fail(runId, exception);
             throw exception;
+        }
+    }
+
+    public void removeDocumentsMissingFromScan(Source source, Set<UUID> retainedDocumentIds) {
+        if (retainedDocumentIds.isEmpty()) {
+            documentRepository.deleteAllBySourceId(source.getId());
+        } else {
+            documentRepository.deleteDocumentsMissingFromScan(source.getId(), retainedDocumentIds);
         }
     }
 }

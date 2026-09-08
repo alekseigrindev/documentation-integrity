@@ -8,7 +8,10 @@ import {
   updateSource,
 } from './sourceApi'
 import { listConnectors } from './connectorApi'
-import { latestIngestionRun, synchronizeSource } from './ingestionRunApi'
+import {
+  latestIngestionRun,
+  synchronizeSource,
+} from '../ingestion-runs/ingestionRunApi'
 import { listPublishers } from '../publishers/publisherApi'
 
 vi.mock('./sourceApi', () => ({
@@ -26,7 +29,7 @@ vi.mock('./connectorApi', () => ({
   listConnectors: vi.fn(),
 }))
 
-vi.mock('./ingestionRunApi', () => ({
+vi.mock('../ingestion-runs/ingestionRunApi', () => ({
   latestIngestionRun: vi.fn(),
   synchronizeSource: vi.fn(),
 }))

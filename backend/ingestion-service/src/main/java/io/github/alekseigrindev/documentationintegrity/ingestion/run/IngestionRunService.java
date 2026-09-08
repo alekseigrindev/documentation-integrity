@@ -92,6 +92,7 @@ public class IngestionRunService {
     }
 
 
-
-
+    public List<IngestionRun> findAll() {
+        return ingestionRunRepository.findAllByOrderByStartedAtDescIdDesc();
+    }
 }

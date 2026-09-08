@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Navigation from './Navigation'
 import type { AdministrationSection } from './Navigation'
 import PublisherManagement from './publishers/PublisherManagement'
+import IngestionRuns from './ingestion-runs/IngestionRuns'
 import SourceManagement from './sources/SourceManagement'
 
 function App() {
@@ -24,11 +25,9 @@ function App() {
         />
 
         <main className="main-content">
-          {activeSection === 'sources' ? (
-            <SourceManagement />
-          ) : (
-            <PublisherManagement />
-          )}
+          {activeSection === 'sources' ? <SourceManagement /> : null}
+          {activeSection === 'publishers' ? <PublisherManagement /> : null}
+          {activeSection === 'ingestion-runs' ? <IngestionRuns /> : null}
         </main>
       </div>
     </div>

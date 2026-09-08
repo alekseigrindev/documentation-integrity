@@ -1,11 +1,11 @@
 import { type FormEvent, useEffect, useState } from 'react'
-import { listPublishers, type Publisher } from '../publishers/publisherApi'
-import { listConnectors, type Connector } from './connectorApi'
 import {
   latestIngestionRun,
   synchronizeSource,
   type IngestionRun,
-} from './ingestionRunApi'
+} from '../ingestion-runs/ingestionRunApi'
+import { listPublishers, type Publisher } from '../publishers/publisherApi'
+import { listConnectors, type Connector } from './connectorApi'
 import {
   chooseLocalDirectory,
   createSource,

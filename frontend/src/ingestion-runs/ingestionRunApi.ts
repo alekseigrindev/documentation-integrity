@@ -74,3 +74,22 @@ export async function latestIngestionRun(
   const runs = (await response.json()) as IngestionRun[]
   return runs[0] ?? null
 }
+
+export async function listIngestionRuns(): Promise<IngestionRun[]> {
+  const response = await fetch('/api/admin/ingestion-runs').catch(() => {
+    throw new IngestionRunApiError(
+      'Unable to reach the Ingestion Run API',
+      'network',
+    )
+  })
+
+  if (response.status !== 200) {
+    throw new IngestionRunApiError(
+      `Ingestion Run API returned status ${response.status}`,
+      'http',
+      response.status,
+    )
+  }
+
+  return (await response.json()) as IngestionRun[]
+}

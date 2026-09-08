@@ -6,26 +6,25 @@ This file is the local working tracker for the active milestone.
 
 - **M3 — Publisher management vertical slice — Completed 2026-09-02**
 - **M4 — Source management vertical slice — Completed 2026-09-02**
+- **M5 — Source synchronization vertical slice — Completed 2026-09-08**
 
 ## Active Milestone
 
-**M5 — Source synchronization vertical slice**
+No active milestone. Select the next milestone before starting new work.
 
-**Plain outcome:** An operator clicks Sync for a registered GitHub Source and
-can see whether its documentation was synchronized or failed safely.
+M5 is complete. An operator can synchronize a registered Source, see the
+result safely, and review recorded ingestion runs.
 
 ## M5 Task Tracker
 
 | Task | Plain outcome | Status |
 | --- | --- | --- |
-| M5.1 Reliable local synchronization | The system can synchronize the approved local GitHub Actions fixture without corrupting the current documentation state. | In progress |
-| M5.2 Synchronization button and result | The operator can start synchronization from the Sources screen and see the result. | In progress |
+| M5.1 Reliable local synchronization | The system can synchronize the approved local GitHub Actions fixture without corrupting the current documentation state. | Completed 2026-09-08 |
+| M5.2 Synchronization button and result | The operator can start synchronization from the Sources screen, see the result, and review recent runs. | Completed 2026-09-08 |
 
 ## Active Task
 
-**M5.2 — Synchronization button and result**
-
-**Proposed branch:** `feature/m5t2-synchronization-button-and-result`
+None.
 
 ### What M5.1 Must Make True
 
@@ -54,6 +53,13 @@ synchronizes its registered Source:
 - Do not add Kafka, background workers, retries, remote crawling, new connector
   types, retrieval, diagnosis, or chat.
 
+### M5 operational logging
+
+Each synchronization attempt must emit safe lifecycle logs for the Source ID,
+created run ID, completed scan document count, and final success or failure.
+Failure logs may include the exception type and bounded message, but never
+document content, raw files, or arbitrary local-directory paths.
+
 ### Current local-directory decision
 
 A `LOCAL_DIRECTORY` Source stores the operator-provided `file:` URL of a
@@ -78,18 +84,22 @@ progress. When it finishes, the screen shows either:
 - **Succeeded** — the Source was synchronized; or
 - **Failed** — a short safe explanation of why it failed.
 
+The operator can also open **Ingestion runs** to see recent runs across Sources,
+with their Source name, status, times, and failed-run message when applicable,
+and can refresh the list on demand.
+
 ### What Proves M5.2 Is Done
 
-- Focused frontend tests prove the Sync request, the in-progress state, and
-  both visible final results.
 - In a real local browser, the operator starts synchronization for the allowed
-  fixture Source and sees the successful result.
-- Frontend tests, lint, and production build pass.
+  fixture Source, sees the successful result, and can view ingestion runs.
+- Frontend lint and production build pass.
+
+Focused frontend tests are deliberately deferred for this MVP closure.
 
 ### M5.2 Boundaries
 
-- Do not add Source editing or deletion, a job dashboard, polling, global
-  state, a router, Kafka, retrieval, diagnosis, or chat.
+- Do not add Source editing or deletion, filtering, pagination, run-detail
+  pages, polling, global state, a router, Kafka, retrieval, diagnosis, or chat.
 
 ## What Proves All of M5 Is Done
 

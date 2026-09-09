@@ -76,32 +76,38 @@ function DocumentationSearch() {
         ) : matches.length === 0 ? (
           <p className="empty-state">No matching passages were found.</p>
         ) : (
-          <ol className="search-results" aria-label="Search results">
-            {matches.map((match) => (
-              <li key={match.chunkId}>
-                <article>
-                  <pre className="search-result-content">{match.content}</pre>
-                  <footer className="search-result-citation">
-                    <p>
-                      <strong>Source:</strong>{' '}
-                      {match.canonicalUrl ? (
-                        <a
-                          href={match.canonicalUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {match.sourceLocator}
-                        </a>
-                      ) : (
-                        match.sourceLocator
-                      )}
-                    </p>
-                    <p>{match.attribution}</p>
-                  </footer>
-                </article>
-              </li>
-            ))}
-          </ol>
+          <>
+            <p className="search-result-count">
+              {matches.length} matching{' '}
+              {matches.length === 1 ? 'passage' : 'passages'}
+            </p>
+            <ol className="search-results" aria-label="Search results">
+              {matches.map((match) => (
+                <li key={match.chunkId}>
+                  <article>
+                    <pre className="search-result-content">{match.content}</pre>
+                    <footer className="search-result-citation">
+                      <p>
+                        <strong>Source:</strong>{' '}
+                        {match.canonicalUrl ? (
+                          <a
+                            href={match.canonicalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {match.sourceLocator}
+                          </a>
+                        ) : (
+                          match.sourceLocator
+                        )}
+                      </p>
+                      <p>{match.attribution}</p>
+                    </footer>
+                  </article>
+                </li>
+              ))}
+            </ol>
+          </>
         )}
       </div>
     </section>

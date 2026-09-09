@@ -45,6 +45,13 @@
   concrete outcome and acceptance evidence, decomposes it into delivery tasks,
   and records the boundaries of each task. It contains no product
   implementation. Begin task 1 only after task 0 is accepted.
+- `CURRENT_FOCUS.md` is a chronological local development record as well as the
+  active tracker. When a new milestone begins, move the completed milestone's
+  full record below the active milestone rather than deleting or reducing it to
+  a status line. Preserve its outcome, task boundaries, material decisions, and
+  acceptance evidence so retrospective review can reconstruct the development
+  path. Keep only the active milestone and its next milestone outline in the
+  immediately visible working area.
 - Every milestone ends with a named finalization task. It contains only fixes,
   small usability improvements, and acceptance-evidence corrections discovered
   while delivering that milestone. It re-runs the milestone acceptance story

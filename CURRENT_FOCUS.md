@@ -1,6 +1,10 @@
 # Current Focus
 
-This file is the local working tracker for the active milestone.
+This file is the local working tracker for the active milestone and a
+chronological record of completed milestones. When a new milestone begins, move
+the completed milestone's full record below the active working area rather than
+deleting or condensing it, so development decisions and evidence remain
+available for retrospective review.
 
 ## Previously Completed Milestones
 
@@ -10,25 +14,26 @@ This file is the local working tracker for the active milestone.
 
 ## Active Milestone
 
-**M6 — Measurable evidence retrieval vertical slice**
+**M6 — Citable lexical search and evaluation preparation**
 
-**Plain outcome:** A user searches synchronized documentation, sees passages
-with citations, and can later rely on measured retrieval quality.
+**Plain outcome:** A user searches synchronized documentation and sees passages
+with citations. The project also has a fixed, reviewable evaluation set and
+report format for the next evaluation vertical slice.
 
 ### M6 Agreed Delivery Plan
 
-M6 first gives the user a usable cited lexical search. It then gives the
-operator a reproducible comparison of retrieval methods before any method
-replaces that lexical baseline.
+M6 first gives the user a usable cited lexical search. It then fixes the
+evaluation inputs and report format that M7 will use to run lexical retrieval
+from the browser and show the operator measured results.
 
 M6 uses a reviewed evaluation set of 12 search cases. Each case records a user
 query and the source locator or locators that count as correct evidence. The
 30-case release evaluation remains M8 work.
 
-A candidate retrieval method replaces lexical search only when it finds the
-correct evidence in the first ten results at least as often as lexical search
-and places correct evidence higher in the result list. The comparison also
-records typical and slow search latency.
+The M6 evaluation data defines the comparison rule for later retrieval methods:
+a candidate replaces lexical search only when it finds the correct evidence in
+the first ten results at least as often and places that evidence higher. The
+later comparison also records typical and slow search latency.
 
 ## M6 Task Tracker
 
@@ -36,12 +41,12 @@ records typical and slow search latency.
 | --- | --- | --- |
 | M6.0 Milestone definition | The team agrees the M6 outcome, acceptance evidence, delivery tasks, and boundaries before implementation begins. | Completed 2026-09-08 |
 | M6.1 Citable lexical search in the browser | A user enters a documentation query and sees matching passages with their source citation. | Completed 2026-09-08 |
-| M6.2 Measured retrieval selection | An operator compares retrieval methods on the agreed cases and retains the best measured method. | Planned |
-| M6.3 Milestone finalization | The M6 user and operator stories work without known M6 defects or usability blockers. | Planned |
+| M6.2 Evaluation preparation | The project has a fixed 12-case evaluation set and report format tied to the pinned GitHub Actions corpus. | Completed 2026-09-09 |
+| M6.3 Milestone finalization | The M6 user and operator stories work without known M6 defects or usability blockers. | In progress |
 
 ## Active Task
 
-None. M6T1 is complete; begin M6T2 next.
+**M6T3 — Milestone finalization**
 
 ### M6T1 — Citable lexical search in the browser
 
@@ -63,35 +68,52 @@ gRPC, or a new backend service.
 
 **Proposed branch:** `feature/m6t2-measured-retrieval-selection`
 
-**Operator scenario:** An operator runs one reproducible report that compares
-lexical, vector, hybrid, and reranked retrieval on the agreed 12 search cases,
-then sees which method remains selected and how long each method takes.
+**Evaluation corpus:** the pinned `github/docs` checkout at commit
+`062800c32b5d12ccae18d1a4a542e94069d827f8`, using `content/actions/`.
 
-**What proves it is done:** The versioned report records, for every method,
-whether expected evidence appears in the first ten results, how highly it is
-ranked, typical latency, slow latency, and the selected method. A new method
-replaces lexical only when it meets the agreed selection rule above.
+**Operator scenario:** Before browser evaluation is implemented, the project
+has one fixed set of 12 GitHub Actions search cases and one reviewable report
+format. Each case identifies the documentation locator that counts as correct
+evidence.
 
-**Boundaries:** No new user-facing search controls, diagnosis, chat, gRPC,
-additional connectors, or release-quality claims. Building the 30-case release
-evaluation set belongs to M8.
+**What proves it is done:** The versioned case file contains 12 reviewed cases,
+each with a query and expected locator, tied to the pinned corpus commit. The
+versioned report format has one result slot per case and method, plus method
+summaries and selected-method fields, but contains no fabricated measurements.
+
+**Boundaries:** Do not add an evaluation runner, endpoint, frontend evaluation
+screen, database table, embeddings, vector retrieval, hybrid retrieval,
+reranking, diagnosis, chat, gRPC, or a new service. Building the 30-case
+release evaluation set belongs to M8.
 
 ### M6T3 — Milestone finalization
 
 **Proposed branch:** `feature/m6t3-retrieval-finalization`
 
 **User and operator scenario:** After M6T1 and M6T2, the developer can search
-synchronized documentation with citations, and the operator can run the agreed
-retrieval comparison, without known M6 defects or usability blockers.
+synchronized documentation with citations, and the M7 evaluation inputs are
+ready for use, without known M6 defects or usability blockers.
 
 The operator can also inspect each successful ingestion run and see its added
 and removed document and chunk counts.
 
+When configuring a local Source, the operator can choose either a readable
+directory or one readable Markdown file, then synchronize that selected target.
+
+While the operator types a Source name, the form generates a default Source
+key that the operator can review or replace.
+
+After a documentation search, the user sees the number of matching passages
+returned by that search.
+
 **What proves it is done:** Every recorded M6 finding is resolved or explicitly
-deferred, then the M6 browser search and 12-case retrieval comparison are run
-again successfully. A controlled successful sync that adds and removes known
-documents shows matching added and removed document and chunk counts in
-**Ingestion runs**.
+deferred, then the M6 browser search works successfully and the 12-case
+evaluation data and report format remain valid. A controlled successful sync
+that adds and removes known documents shows matching added and removed document and chunk counts in
+**Ingestion runs**. A selected local Markdown file and a selected local
+directory both synchronize successfully. Typing a Source name produces a
+usable default Source key without preventing the operator from editing it. A
+completed documentation search shows its result count.
 
 **Boundaries:** Include only fixes, small usability improvements, and
 acceptance-evidence corrections discovered in M6. Do not add new retrieval
@@ -100,6 +122,38 @@ refactors. The ingestion improvement adds only four successful-run counters:
 documents added, documents removed, chunks added, and chunks removed. Failed
 runs continue to show a safe failure result without change counts; no
 per-document audit history is added.
+
+For local Sources, move source-URL validation fully to `SourceService` during
+registration and update: it accepts only a readable `file:` URL targeting a
+directory or regular Markdown file. Remove duplicated source-URL and target
+type validation from `LocalDirectorySourceScanner`; it retains only runtime
+access handling for a target that changes or disappears after registration.
+
+Do not add a connector type, file-upload workflow, or ingestion-run API for
+this capability.
+
+## Next Milestone (Provisional)
+
+**M7 — Evaluation vertical slice**
+
+**Operator outcome:** With the pinned GitHub Actions Source synchronized, an
+operator starts the 12-case lexical evaluation in the browser and receives one
+report showing every case's result, lexical Recall@10, ranking score, p50/p95
+latency, and the corpus and evaluation-set versions used.
+
+**Frontend surface:** An **Evaluations** screen lets the operator start the
+evaluation and view its completed report.
+
+**What proves it is done:** Starting evaluation for the synchronized pinned
+Source returns a report for all 12 cases. Every case shows whether its expected
+evidence appears in the first 10 results, its rank when present, and duration.
+The report shows lexical summary metrics and safe failure feedback when the
+required Source is unavailable or has not synchronized successfully.
+
+**Boundaries:** The first M7 slice evaluates only the implemented lexical
+method. Do not add vectors, embeddings, hybrid retrieval, reranking, chat, a
+physical evaluation service, a separate database, or the M8 30-case release
+evaluation set. M7 begins with M7T0 planning before implementation.
 
 ### What Proves M6T0 Is Done
 

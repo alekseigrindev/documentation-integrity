@@ -7,6 +7,50 @@ that the capability exists.
 Each capability must enter a milestone only after its user problem and
 implementation trigger are demonstrated.
 
+## High-Priority Future Capabilities
+
+### Browser Directory Upload for Remote Ingestion
+
+**User problem:** A user accessing the web application from their own computer
+must be able to select a local directory and ingest its supported files when
+`ingestion-service` runs on a remote host or VPS.
+
+**Required behavior:** The browser receives the user's explicit directory
+selection, filters selected files by supported format and size for fast
+feedback, preserves relative paths, and uploads only eligible file contents.
+The backend repeats all validation and owns ingestion, provenance, chunking,
+storage, and failure handling. The server never receives unrestricted access
+to the user's local filesystem or a local absolute path.
+
+**Implementation trigger:** A remote or VPS deployment is selected and an
+operator must ingest documentation from their own local computer.
+
+**Why deferred:** This is the file-upload connector flow, not an extension of
+the same-host local-directory picker. It requires an upload API, size/count
+limits, multipart or streaming behavior, relative-path semantics, and
+integration evidence. M6 currently measures retrieval quality.
+
+## Retrieval Method Activation
+
+**User problem:** After two or more retrieval configurations have measured
+results, an operator needs to activate a validated configuration or return to
+the lexical baseline without changing application code.
+
+**Required behavior:** An operator-facing setting lists only evaluated retrieval
+configurations, identifies the active configuration, and permits a safe switch
+to another validated configuration. Retrieval methods remain application
+strategies by default; enabling or disabling one does not imply starting or
+stopping a separately deployed service.
+
+**Implementation trigger:** At least two retrieval configurations have
+reproducible comparison reports and an operator needs to switch the live method
+without a code deployment.
+
+**Why deferred:** M7 first proves one browser-to-result lexical evaluation
+flow. A settings UI before a second measured method exists would create empty
+configuration. Managing separately deployed services would additionally require
+authentication, validation, health checks, audit history, and rollback rules.
+
 ## Publisher Soft Deletion
 
 **User problem:** An operator must be able to revoke a publisher without

@@ -1,6 +1,10 @@
 # Current Focus
 
-This file is the local working tracker for the active milestone.
+This file is the local working tracker for the active milestone and a
+chronological record of completed milestones. When a new milestone begins, move
+the completed milestone's full record below the active working area rather than
+deleting or condensing it, so development decisions and evidence remain
+available for retrospective review.
 
 ## Previously Completed Milestones
 
@@ -10,106 +14,170 @@ This file is the local working tracker for the active milestone.
 
 ## Active Milestone
 
-No active milestone. Select the next milestone before starting new work.
+**M6 — Citable lexical search and evaluation preparation**
 
-M5 is complete. An operator can synchronize a registered Source, see the
-result safely, and review recorded ingestion runs.
+**Plain outcome:** A user searches synchronized documentation and sees passages
+with citations. The project also has a fixed, reviewable evaluation set and
+report format for the next evaluation vertical slice.
 
-## M5 Task Tracker
+### M6 Agreed Delivery Plan
+
+M6 first gives the user a usable cited lexical search. It then fixes the
+evaluation inputs and report format that M7 will use to run lexical retrieval
+from the browser and show the operator measured results.
+
+M6 uses a reviewed evaluation set of 12 search cases. Each case records a user
+query and the source locator or locators that count as correct evidence. The
+30-case release evaluation remains M8 work.
+
+The M6 evaluation data defines the comparison rule for later retrieval methods:
+a candidate replaces lexical search only when it finds the correct evidence in
+the first ten results at least as often and places that evidence higher. The
+later comparison also records typical and slow search latency.
+
+## M6 Task Tracker
 
 | Task | Plain outcome | Status |
 | --- | --- | --- |
-| M5.1 Reliable local synchronization | The system can synchronize the approved local GitHub Actions fixture without corrupting the current documentation state. | Completed 2026-09-08 |
-| M5.2 Synchronization button and result | The operator can start synchronization from the Sources screen, see the result, and review recent runs. | Completed 2026-09-08 |
+| M6.0 Milestone definition | The team agrees the M6 outcome, acceptance evidence, delivery tasks, and boundaries before implementation begins. | Completed 2026-09-08 |
+| M6.1 Citable lexical search in the browser | A user enters a documentation query and sees matching passages with their source citation. | Completed 2026-09-08 |
+| M6.2 Evaluation preparation | The project has a fixed 12-case evaluation set and report format tied to the pinned GitHub Actions corpus. | Completed 2026-09-09 |
+| M6.3 Milestone finalization | The M6 user and operator stories work without known M6 defects or usability blockers. | In progress |
 
 ## Active Task
 
-None.
+**M6T3 — Milestone finalization**
 
-### What M5.1 Must Make True
+### M6T1 — Citable lexical search in the browser
 
-We use one explicitly allowed local GitHub Actions fixture. When the system
-synchronizes its registered Source:
+**Proposed branch:** `feature/m6t1-citable-lexical-search`
 
-1. The first run creates the fixture's documentation in the current state.
-2. A second unchanged run does not create duplicate documents or chunks.
-3. A changed fixture file replaces the old searchable content.
-4. A fixture file removed before a complete run is removed from current state.
-5. A broken or incomplete run leaves the last successful documents searchable
-   and records a failed run with a useful, bounded error.
+**User scenario:** A developer enters a documentation query and sees matching
+passages with the source locator and attribution that identify where each
+passage came from.
 
-### What Proves M5.1 Is Done
+**What proves it is done:** A known query against synchronized documentation
+returns a cited matching passage in the local browser. Empty and
+request-failure states are clear. Frontend lint and production build pass.
 
-- Backend integration tests run the five scenarios above against the licensed
-  fixture and database.
-- The tests show that no duplicate or stale current documents remain after a
-  successful run, and that a failed run does not remove good existing data.
-- A start request leaves a final run record that says either `SUCCEEDED` or
-  `FAILED`; a failed run includes a short operator-safe reason.
+**Boundaries:** Reuse the existing lexical search endpoint. Do not add
+embeddings, vector or hybrid retrieval, reranking, evaluation, diagnosis, chat,
+gRPC, or a new backend service.
 
-### M5.1 Boundaries
+### M6T2 — Measured retrieval selection
 
-- Keep the existing synchronous local HTTP path.
-- Do not add Kafka, background workers, retries, remote crawling, new connector
-  types, retrieval, diagnosis, or chat.
+**Proposed branch:** `feature/m6t2-measured-retrieval-selection`
 
-### M5 operational logging
+**Evaluation corpus:** the pinned `github/docs` checkout at commit
+`062800c32b5d12ccae18d1a4a542e94069d827f8`, using `content/actions/`.
 
-Each synchronization attempt must emit safe lifecycle logs for the Source ID,
-created run ID, completed scan document count, and final success or failure.
-Failure logs may include the exception type and bounded message, but never
-document content, raw files, or arbitrary local-directory paths.
+**Operator scenario:** Before browser evaluation is implemented, the project
+has one fixed set of 12 GitHub Actions search cases and one reviewable report
+format. Each case identifies the documentation locator that counts as correct
+evidence.
 
-### Current local-directory decision
+**What proves it is done:** The versioned case file contains 12 reviewed cases,
+each with a query and expected locator, tied to the pinned corpus commit. The
+versioned report format has one result slot per case and method, plus method
+summaries and selected-method fields, but contains no fabricated measurements.
 
-A `LOCAL_DIRECTORY` Source stores the operator-provided `file:` URL of a
-directory accessible to `ingestion-service`. Registering that Source is the
-explicit allowlisting action. The browser UI accepts a local or mounted-network
-directory path and can ask the local backend to open a directory picker. This
-works only when the browser and `ingestion-service` run on the same desktop
-machine; it does not use an environment root.
+**Boundaries:** Do not add an evaluation runner, endpoint, frontend evaluation
+screen, database table, embeddings, vector retrieval, hybrid retrieval,
+reranking, diagnosis, chat, gRPC, or a new service. Building the 30-case
+release evaluation set belongs to M8.
 
-## Planned Next Task
+### M6T3 — Milestone finalization
 
-**M5.2 — Synchronization button and result**
+**Proposed branch:** `feature/m6t3-retrieval-finalization`
 
-**Proposed branch:** `feature/m5t2-synchronization-button-and-result`
+**Purpose:** Implement the small fixes, usability improvements, and acceptance
+evidence corrections that were explicitly noticed while delivering M6. This is
+not a review, audit, or reopening of completed M6 work.
 
-### What M5.2 Must Make True
+### Recorded Corrections
 
-On the Sources screen, the operator can select a registered Source and press
-**Sync**. While the request runs, the button shows that synchronization is in
-progress. When it finishes, the screen shows either:
+1. **Successful ingestion-run change counts.** The operator sees documents
+   added, updated, and removed on a successful ingestion run. Failed runs
+   continue to show a safe failure result without change counts; no
+   per-document audit history is added.
 
-- **Succeeded** — the Source was synchronized; or
-- **Failed** — a short safe explanation of why it failed.
+   **Proof:** A controlled sync that adds, updates, and removes known documents
+   shows matching document counts in **Ingestion runs**.
 
-The operator can also open **Ingestion runs** to see recent runs across Sources,
-with their Source name, status, times, and failed-run message when applicable,
-and can refresh the list on demand.
+2. **Local Source targets and validation.** The operator can configure a local
+   Source using either a readable directory or one readable Markdown file, then
+   synchronize that target. `SourceService` validates the readable `file:` URL
+   during registration and update. `LocalDirectorySourceScanner` retains only
+   runtime access handling for a target that changes or disappears afterwards.
 
-### What Proves M5.2 Is Done
+   **Proof:** A selected local directory and a selected local Markdown file
+   both synchronize successfully. Invalid local targets are rejected during
+   Source registration or update.
 
-- In a real local browser, the operator starts synchronization for the allowed
-  fixture Source, sees the successful result, and can view ingestion runs.
-- Frontend lint and production build pass.
+3. **Default Source key.** When creating a Source, the form generates a usable
+   Source key while the operator types its name. The operator can review or
+   replace the generated value; editing an existing Source does not silently
+   replace its stored key.
 
-Focused frontend tests are deliberately deferred for this MVP closure.
+   **Proof:** Typing a name for a new Source fills the key field, and the
+   operator can replace the generated value before saving.
 
-### M5.2 Boundaries
+4. **Search result count.** After a documentation search, the user sees the
+   number of matching passages returned by that search.
 
-- Do not add Source editing or deletion, filtering, pagination, run-detail
-  pages, polling, global state, a router, Kafka, retrieval, diagnosis, or chat.
+   **Proof:** A completed search with matches displays the matching result
+   count beside its results.
 
-## What Proves All of M5 Is Done
+5. **Blank local Markdown files.** A local-directory synchronization skips
+   Markdown files that are empty or contain only whitespace, then continues
+   with the remaining readable documents. A previously indexed file that
+   becomes blank is removed as missing from the completed scan.
 
-M5 is complete when the real local browser proves this complete story:
+   **Proof:** A directory containing one blank Markdown file and one readable
+   Markdown file completes successfully and indexes the readable file.
 
-1. A registered GitHub Source appears in Sources.
-2. The operator clicks **Sync** and sees that it is running.
-3. The system finishes and the operator sees **Succeeded**.
-4. The backend tests prove that repeated, changed, removed, and failed fixture
-   runs keep the documentation state correct and safe.
+**Task completion:** Every recorded correction above works in its affected
+story. The cited browser search still works, and the 12-case evaluation data
+and report format remain valid. This is a targeted recheck, not a review of all
+M6 implementation.
 
-At that point, the next milestone may start. Nothing about Kafka is an M5
-acceptance condition.
+**Boundaries:** Include only these corrections and another small M6 correction
+that is first recorded here. Do not add new retrieval capabilities, change the
+agreed quality gate, add chat, add a connector type, add a file-upload workflow
+or ingestion-run API, or make unrelated refactors.
+
+## Next Milestone (Provisional)
+
+**M7 — Evaluation vertical slice**
+
+**Operator outcome:** With the pinned GitHub Actions Source synchronized, an
+operator starts the 12-case lexical evaluation in the browser and receives one
+report showing every case's result, lexical Recall@10, ranking score, p50/p95
+latency, and the corpus and evaluation-set versions used.
+
+**Frontend surface:** An **Evaluations** screen lets the operator start the
+evaluation and view its completed report.
+
+**What proves it is done:** Starting evaluation for the synchronized pinned
+Source returns a report for all 12 cases. Every case shows whether its expected
+evidence appears in the first 10 results, its rank when present, and duration.
+The report shows lexical summary metrics and safe failure feedback when the
+required Source is unavailable or has not synchronized successfully.
+
+**Boundaries:** The first M7 slice evaluates only the implemented lexical
+method. Do not add vectors, embeddings, hybrid retrieval, reranking, chat, a
+physical evaluation service, a separate database, or the M8 30-case release
+evaluation set. M7 begins with M7T0 planning before implementation.
+
+### What Proves M6T0 Is Done
+
+- `CURRENT_FOCUS.md` contains the agreed M6 plan and all M6 delivery tasks.
+- Each delivery task has a concrete user or operator scenario, observable
+  proof, and explicit boundaries.
+- M6 uses 12 reviewed cases now; M8 owns the 30-case release evaluation.
+
+### M6T0 Boundaries
+
+- M6T0 contains no product code, API change, database migration, or frontend
+  behavior.
+- M6T1 begins only after M6T0 is accepted.

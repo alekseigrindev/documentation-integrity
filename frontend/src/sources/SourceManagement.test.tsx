@@ -164,6 +164,47 @@ describe('SourceManagement', () => {
     ).toBeInTheDocument()
   })
 
+  it('generates a Source key from a new Source name and preserves a manual key', async () => {
+    vi.mocked(listPublishers).mockResolvedValue([publisher])
+    vi.mocked(listSources).mockResolvedValue([])
+
+    render(<SourceManagement />)
+
+    const dialog = await openCreateDialog()
+    const sourceName = within(dialog).getByRole('textbox', {
+      name: 'Source name',
+    })
+    const sourceKey = within(dialog).getByRole('textbox', {
+      name: 'Source key',
+    })
+
+    fireEvent.change(sourceName, { target: { value: 'GitHub Docs' } })
+    expect(sourceKey).toHaveValue('github-docs')
+
+    fireEvent.change(sourceKey, { target: { value: 'github-actions-docs' } })
+    fireEvent.change(sourceName, { target: { value: 'GitHub Actions Docs' } })
+    expect(sourceKey).toHaveValue('github-actions-docs')
+  })
+
+  it('does not replace an existing Source key when its name changes', async () => {
+    vi.mocked(listPublishers).mockResolvedValue([publisher])
+    vi.mocked(listSources).mockResolvedValue([source])
+
+    render(<SourceManagement />)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit Source' })
+
+    fireEvent.change(
+      within(dialog).getByRole('textbox', { name: 'Source name' }),
+      { target: { value: 'GitHub Actions Docs' } },
+    )
+
+    expect(
+      within(dialog).getByRole('textbox', { name: 'Source key' }),
+    ).toHaveValue('github-docs')
+  })
+
   it('rejects blank Source fields before sending a request', async () => {
     vi.mocked(listPublishers).mockResolvedValue([publisher])
     vi.mocked(listSources).mockResolvedValue([])

@@ -10,12 +10,16 @@ vi.mock('./sources/SourceManagement', () => ({
   default: () => <div>Source management</div>,
 }))
 
+vi.mock('./search/DocumentationSearch', () => ({
+  default: () => <div>Documentation search</div>,
+}))
+
 vi.mock('./ingestion-runs/IngestionRuns', () => ({
   default: () => <div>Ingestion run management</div>,
 }))
 
 describe('App', () => {
-  it('switches between Source and Publisher management', () => {
+  it('switches between Search, Source, and Publisher management', () => {
     render(<App />)
 
     expect(
@@ -25,19 +29,27 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('navigation', { name: 'Administration' }),
+      screen.getByRole('navigation', { name: 'Application' }),
     ).toBeInTheDocument()
     const sourcesButton = screen.getByRole('button', { name: 'Sources' })
+    const searchButton = screen.getByRole('button', { name: 'Search' })
     const publishersButton = screen.getByRole('button', { name: 'Publishers' })
     const ingestionRunsButton = screen.getByRole('button', {
       name: 'Ingestion runs',
     })
 
-    expect(sourcesButton).toHaveAttribute('aria-pressed', 'true')
+    expect(searchButton).toHaveAttribute('aria-pressed', 'true')
+    expect(sourcesButton).toHaveAttribute('aria-pressed', 'false')
     expect(publishersButton).toHaveAttribute('aria-pressed', 'false')
     expect(ingestionRunsButton).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByText('Source management')).toBeInTheDocument()
+    expect(screen.getByText('Documentation search')).toBeInTheDocument()
     expect(screen.queryByText('Publisher management')).not.toBeInTheDocument()
+
+    fireEvent.click(sourcesButton)
+
+    expect(sourcesButton).toHaveAttribute('aria-pressed', 'true')
+    expect(searchButton).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByText('Source management')).toBeInTheDocument()
 
     fireEvent.click(publishersButton)
 

@@ -66,7 +66,7 @@ public interface DocumentationDocumentRepository extends JpaRepository<Documenta
         WHERE source_id = :sourceId
           AND id NOT IN (:retainedDocumentIds)
         """, nativeQuery = true)
-    void deleteDocumentsMissingFromScan(
+    long deleteDocumentsMissingFromScan(
             @Param("sourceId") UUID sourceId,
             @Param("retainedDocumentIds") Set<UUID> retainedDocumentIds);
 
@@ -75,5 +75,5 @@ public interface DocumentationDocumentRepository extends JpaRepository<Documenta
         DELETE FROM knowledge.documents
         WHERE source_id = :sourceId
         """, nativeQuery = true)
-    void deleteAllBySourceId(@Param("sourceId") UUID sourceId);
+    long deleteAllBySourceId(@Param("sourceId") UUID sourceId);
 }

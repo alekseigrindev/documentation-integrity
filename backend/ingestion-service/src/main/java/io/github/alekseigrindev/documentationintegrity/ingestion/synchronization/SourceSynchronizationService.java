@@ -3,10 +3,13 @@ package io.github.alekseigrindev.documentationintegrity.ingestion.synchronizatio
 import io.github.alekseigrindev.documentationintegrity.ingestion.connector.AcquiredDocument;
 import io.github.alekseigrindev.documentationintegrity.ingestion.connector.SourceScanner;
 import io.github.alekseigrindev.documentationintegrity.ingestion.importing.DocumentImportService;
+import io.github.alekseigrindev.documentationintegrity.ingestion.importing.DocumentStateResult;
 import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRun;
+import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRunChangeCounts;
 import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRunService;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.Source;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.SourceRepository;
+import io.github.alekseigrindev.documentationintegrity.ingestion.importing.ImportOutcome;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,13 +45,23 @@ public class SourceSynchronizationService {
         try (Stream<AcquiredDocument> documents = scannerFor(source).scan(source)) {
             List<AcquiredDocument> scannedDocuments = documents.toList();
 
-            Set<UUID> retainedDocumentIds = scannedDocuments.stream()
-                    .map(document -> documentImportService.importAcquiredDocument(source, document).document().getId())
+            List<DocumentStateResult> retainedDocumentResults = scannedDocuments.stream()
+                    .map(document -> documentImportService.importAcquiredDocument(source, document))
+                    .toList();
+
+            Set<UUID> retainedDocumentIds = retainedDocumentResults.stream()
+                    .map(documentStateResult -> documentStateResult.document().getId())
                     .collect(Collectors.toSet());
 
-            documentImportService.removeDocumentsMissingFromScan(source, retainedDocumentIds);
+            long removedDocumentCount = documentImportService.removeDocumentsMissingFromScan(source, retainedDocumentIds);
 
-            ingestionRunService.succeed(runId);
+            IngestionRunChangeCounts changeCounts = new IngestionRunChangeCounts(
+                    retainedDocumentResults.stream().filter(documentStateResult -> documentStateResult.outcome() == ImportOutcome.CREATED).count(),
+                    retainedDocumentResults.stream().filter(documentStateResult -> documentStateResult.outcome() == ImportOutcome.UPDATED).count(),
+                        removedDocumentCount
+                    );
+
+            ingestionRunService.succeed(runId, changeCounts);
             return ingestionRunService.get(runId);
         } catch (RuntimeException exception) {
             ingestionRunService.fail(runId, exception);

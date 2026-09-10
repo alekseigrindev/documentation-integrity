@@ -15,6 +15,9 @@ public record IngestionRunResponse(
         IngestionRunStatus status,
         Instant startedAt,
         Instant finishedAt,
+        Long documentsAdded,
+        Long documentsUpdated,
+        Long documentsRemoved,
         IngestionFailureCode failureCode,
         String failureMessage
 ) {

@@ -6,6 +6,9 @@ export type IngestionRun = {
   status: IngestionRunStatus
   startedAt: string
   finishedAt: string | null
+  documentsAdded: number | null
+  documentsUpdated: number | null
+  documentsRemoved: number | null
   failureCode: string | null
   failureMessage: string | null
 }

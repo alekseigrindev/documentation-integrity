@@ -7,6 +7,7 @@ import io.github.alekseigrindev.documentationintegrity.ingestion.connector.Docum
 import io.github.alekseigrindev.documentationintegrity.ingestion.connector.local_directory.FileUploadDocumentConnector;
 import io.github.alekseigrindev.documentationintegrity.ingestion.connector.local_directory.LocalDirectoryDocumentConnector;
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocumentRepository;
+import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRunChangeCounts;
 import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRunService;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.Source;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.SourceRepository;
@@ -82,7 +83,7 @@ public class DocumentImportService {
             DocumentStateResult stateResult =
                     importAcquiredDocument(source, acquiredDocument);
 
-            ingestionRunService.succeed(runId);
+            ingestionRunService.succeed(runId, changeCountsFor(stateResult.outcome()));
 
             return new DocumentImportResult(
                     runId,
@@ -96,11 +97,21 @@ public class DocumentImportService {
         }
     }
 
-    public void removeDocumentsMissingFromScan(Source source, Set<UUID> retainedDocumentIds) {
+    public long removeDocumentsMissingFromScan(Source source, Set<UUID> retainedDocumentIds) {
         if (retainedDocumentIds.isEmpty()) {
-            documentRepository.deleteAllBySourceId(source.getId());
+            return documentRepository.deleteAllBySourceId(source.getId());
         } else {
-            documentRepository.deleteDocumentsMissingFromScan(source.getId(), retainedDocumentIds);
+            return documentRepository.deleteDocumentsMissingFromScan(source.getId(), retainedDocumentIds);
         }
+    }
+
+    private IngestionRunChangeCounts changeCountsFor(
+            ImportOutcome outcome
+    ) {
+        return switch (outcome) {
+            case CREATED -> new IngestionRunChangeCounts(1, 0, 0);
+            case UPDATED -> new IngestionRunChangeCounts(0, 1, 0);
+            case UNCHANGED -> new IngestionRunChangeCounts(0, 0, 0);
+        };
     }
 }

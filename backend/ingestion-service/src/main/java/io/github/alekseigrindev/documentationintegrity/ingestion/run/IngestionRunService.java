@@ -34,14 +34,17 @@ public class IngestionRunService {
                 clock.instant(),
                 null,
                 null,
+                null,
+                null,
+                null,
                 null
         );
         return ingestionRunRepository.save(run).getId();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void succeed(UUID runId) {
-        find(runId).succeed(clock.instant());
+    public void succeed(UUID runId,  IngestionRunChangeCounts changeCounts) {
+        find(runId).succeed(clock.instant(), changeCounts);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

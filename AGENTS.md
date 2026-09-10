@@ -40,6 +40,23 @@
 
 ## Milestone, Task, and Commit Decomposition
 
+- Every new milestone starts with task 0 (`M6T0`, `M7T0`, and so on). Task 0
+  is the explicit planning and scope-freezing task: it defines the milestone's
+  concrete outcome and acceptance evidence, decomposes it into delivery tasks,
+  and records the boundaries of each task. It contains no product
+  implementation. Begin task 1 only after task 0 is accepted.
+- `CURRENT_FOCUS.md` is a chronological local development record as well as the
+  active tracker. When a new milestone begins, move the completed milestone's
+  full record below the active milestone rather than deleting or reducing it to
+  a status line. Preserve its outcome, task boundaries, material decisions, and
+  acceptance evidence so retrospective review can reconstruct the development
+  path. Keep only the active milestone and its next milestone outline in the
+  immediately visible working area.
+- Every milestone ends with a named finalization task. It contains only fixes,
+  small usability improvements, and acceptance-evidence corrections discovered
+  while delivering that milestone. It re-runs the milestone acceptance story
+  after those corrections. Do not use it for new capabilities, changed product
+  scope, or unrelated refactoring.
 - Define a milestone by one verifiable user or operator outcome. Decompose it
   into separate tasks only when a task delivers independently useful behavior,
   resolves material uncertainty or risk, can be accepted independently, has a
@@ -103,6 +120,10 @@
   Teach the reasoning expected from a Senior/Lead Engineer and System
   Architect so that Aleksei can independently explain, design, challenge, and
   review the resulting decisions instead of merely receiving generated code.
+- Aleksei implements backend changes himself by default. For backend work,
+  inspect, explain, review, write or guide tests, and provide precise edits,
+  but do not modify backend files unless Aleksei explicitly asks for that
+  particular implementation to be made.
 - For every non-trivial task, explain the problem being solved, why it belongs
   to the active milestone, the relevant constraints and invariants, the chosen
   approach, its trade-offs, likely failure modes, and the evidence that will

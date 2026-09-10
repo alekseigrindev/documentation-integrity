@@ -58,6 +58,14 @@ function sourceUrlFromLocalDirectoryPath(path: string) {
     : new URL(`file://${trimmedPath}`).toString()
 }
 
+function sourceKeyFromName(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 function syncResultFromRun(run: IngestionRun): SourceSyncResult {
   if (run.status === 'SUCCEEDED') {
     return { kind: 'succeeded', message: 'Succeeded' }
@@ -78,6 +86,7 @@ function SourceManagement() {
   const [publisherId, setPublisherId] = useState('')
   const [connectorType, setConnectorType] = useState('')
   const [sourceKey, setSourceKey] = useState('')
+  const [sourceKeyWasEdited, setSourceKeyWasEdited] = useState(false)
   const [sourceName, setSourceName] = useState('')
   const [localDirectoryPath, setLocalDirectoryPath] = useState('')
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
@@ -105,6 +114,7 @@ function SourceManagement() {
     setPublisherId('')
     setConnectorType('')
     setSourceKey('')
+    setSourceKeyWasEdited(false)
     setSourceName('')
     setLocalDirectoryPath('')
     setValidationErrors({})
@@ -123,6 +133,7 @@ function SourceManagement() {
     setPublisherId(source.publisherId)
     setConnectorType(source.connectorType)
     setSourceKey(source.sourceKey)
+    setSourceKeyWasEdited(true)
     setSourceName(source.name)
     setLocalDirectoryPath(localDirectoryPathFrom(source.sourceUrl))
     setValidationErrors({})
@@ -409,7 +420,12 @@ function SourceManagement() {
                   validationErrors.name ? 'source-name-error' : undefined
                 }
                 onChange={(event) => {
-                  setSourceName(event.target.value)
+                  const name = event.target.value
+                  setSourceName(name)
+                  if (!editingSource && !sourceKeyWasEdited) {
+                    setSourceKey(sourceKeyFromName(name))
+                    clearFieldError('sourceKey')
+                  }
                   clearFieldError('name')
                 }}
               />
@@ -541,6 +557,7 @@ function SourceManagement() {
                 }
                 onChange={(event) => {
                   setSourceKey(event.target.value)
+                  setSourceKeyWasEdited(true)
                   clearFieldError('sourceKey')
                 }}
               />

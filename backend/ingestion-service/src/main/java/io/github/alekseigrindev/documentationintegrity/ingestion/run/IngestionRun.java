@@ -39,6 +39,15 @@ public class IngestionRun {
     @Column(name = "finished_at")
     private Instant finishedAt;
 
+    @Column(name = "documents_added")
+    private Long documentsAdded;
+
+    @Column(name = "documents_updated")
+    private Long documentsUpdated;
+
+    @Column(name = "documents_removed")
+    private Long documentsRemoved;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "failure_code")
     private IngestionFailureCode failureCode;
@@ -46,9 +55,14 @@ public class IngestionRun {
     @Column(name = "failure_message")
     private String failureMessage;
 
-    public void succeed(Instant finishedAt) {
+    public void succeed(
+            Instant finishedAt,
+            IngestionRunChangeCounts changeCounts) {
         status = IngestionRunStatus.SUCCEEDED;
         this.finishedAt = finishedAt;
+        this.documentsAdded = changeCounts.documentsAdded();
+        this.documentsUpdated = changeCounts.documentsUpdated();
+        this.documentsRemoved = changeCounts.documentsRemoved();
     }
 
     public void fail(

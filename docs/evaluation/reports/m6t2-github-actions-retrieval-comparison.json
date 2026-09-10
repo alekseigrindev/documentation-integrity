@@ -1,0 +1,70 @@
+{
+  "reportFormatVersion": 1,
+  "evaluationSet": {
+    "path": "backend/ingestion-service/src/test/resources/evaluation/github-actions-retrieval-cases.json",
+    "corpusCommit": "062800c32b5d12ccae18d1a4a542e94069d827f8"
+  },
+  "run": {
+    "status": "not-run",
+    "generatedAt": null,
+    "environment": null
+  },
+  "methods": [
+    "lexical",
+    "vector",
+    "hybrid",
+    "reranked"
+  ],
+  "caseResults": [
+    {
+      "caseId": "github-token-recursion-prevention",
+      "results": {}
+    },
+    {
+      "caseId": "github-token-default-permissions",
+      "results": {}
+    },
+    {
+      "caseId": "reusable-workflow-secrets",
+      "results": {}
+    },
+    {
+      "caseId": "environment-secrets",
+      "results": {}
+    },
+    {
+      "caseId": "oidc-short-lived-credentials",
+      "results": {}
+    },
+    {
+      "caseId": "concurrent-workflow-runs",
+      "results": {}
+    },
+    {
+      "caseId": "self-hosted-runner",
+      "results": {}
+    },
+    {
+      "caseId": "manage-dependency-caches",
+      "results": {}
+    },
+    {
+      "caseId": "workflow-expressions",
+      "results": {}
+    },
+    {
+      "caseId": "workflow-permissions-syntax",
+      "results": {}
+    },
+    {
+      "caseId": "workflow-contexts",
+      "results": {}
+    },
+    {
+      "caseId": "manual-workflow-run",
+      "results": {}
+    }
+  ],
+  "methodSummaries": {},
+  "selectedMethod": null
+}

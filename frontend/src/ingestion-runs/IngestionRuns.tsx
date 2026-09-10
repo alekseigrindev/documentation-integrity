@@ -95,6 +95,15 @@ function IngestionRuns() {
                   >
                     {run.status}
                   </span>
+                  {run.status === 'SUCCEEDED' ? (
+                    <p className="ingestion-run-changes">
+                      Documents: added {run.documentsAdded ?? 0}
+                      <span aria-hidden="true"> · </span>
+                      updated {run.documentsUpdated ?? 0}
+                      <span aria-hidden="true"> · </span>
+                      removed {run.documentsRemoved ?? 0}
+                    </p>
+                  ) : null}
                   {run.status === 'FAILED' && run.failureMessage ? (
                     <p className="ingestion-run-failure" role="alert">
                       {run.failureMessage}

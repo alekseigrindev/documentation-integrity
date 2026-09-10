@@ -40,7 +40,8 @@ public class LocalDirectorySourceScanner implements SourceScanner {
                     .map(path -> resolveDocumentPath(localDirectory, path))
                     .filter(this::isMarkdown)
                     .sorted()
-                    .map(path -> acquire(localDirectory, path));
+                    .map(path -> acquire(localDirectory, path))
+                    .filter(document -> !document.content().isBlank());
         } catch (IOException e) {
             throw new UncheckedIOException(
                     "Unable to scan local documentation directory: " + localDirectory,

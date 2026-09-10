@@ -90,47 +90,61 @@ release evaluation set belongs to M8.
 
 **Proposed branch:** `feature/m6t3-retrieval-finalization`
 
-**User and operator scenario:** After M6T1 and M6T2, the developer can search
-synchronized documentation with citations, and the M7 evaluation inputs are
-ready for use, without known M6 defects or usability blockers.
+**Purpose:** Implement the small fixes, usability improvements, and acceptance
+evidence corrections that were explicitly noticed while delivering M6. This is
+not a review, audit, or reopening of completed M6 work.
 
-The operator can also inspect each successful ingestion run and see its added
-and removed document and chunk counts.
+### Recorded Corrections
 
-When configuring a local Source, the operator can choose either a readable
-directory or one readable Markdown file, then synchronize that selected target.
+1. **Successful ingestion-run change counts.** The operator sees documents
+   added, updated, and removed on a successful ingestion run. Failed runs
+   continue to show a safe failure result without change counts; no
+   per-document audit history is added.
 
-While the operator types a Source name, the form generates a default Source
-key that the operator can review or replace.
+   **Proof:** A controlled sync that adds, updates, and removes known documents
+   shows matching document counts in **Ingestion runs**.
 
-After a documentation search, the user sees the number of matching passages
-returned by that search.
+2. **Local Source targets and validation.** The operator can configure a local
+   Source using either a readable directory or one readable Markdown file, then
+   synchronize that target. `SourceService` validates the readable `file:` URL
+   during registration and update. `LocalDirectorySourceScanner` retains only
+   runtime access handling for a target that changes or disappears afterwards.
 
-**What proves it is done:** Every recorded M6 finding is resolved or explicitly
-deferred, then the M6 browser search works successfully and the 12-case
-evaluation data and report format remain valid. A controlled successful sync
-that adds and removes known documents shows matching added and removed document and chunk counts in
-**Ingestion runs**. A selected local Markdown file and a selected local
-directory both synchronize successfully. Typing a Source name produces a
-usable default Source key without preventing the operator from editing it. A
-completed documentation search shows its result count.
+   **Proof:** A selected local directory and a selected local Markdown file
+   both synchronize successfully. Invalid local targets are rejected during
+   Source registration or update.
 
-**Boundaries:** Include only fixes, small usability improvements, and
-acceptance-evidence corrections discovered in M6. Do not add new retrieval
-capabilities, change the agreed quality gate, add chat, or make unrelated
-refactors. The ingestion improvement adds only four successful-run counters:
-documents added, documents removed, chunks added, and chunks removed. Failed
-runs continue to show a safe failure result without change counts; no
-per-document audit history is added.
+3. **Default Source key.** When creating a Source, the form generates a usable
+   Source key while the operator types its name. The operator can review or
+   replace the generated value; editing an existing Source does not silently
+   replace its stored key.
 
-For local Sources, move source-URL validation fully to `SourceService` during
-registration and update: it accepts only a readable `file:` URL targeting a
-directory or regular Markdown file. Remove duplicated source-URL and target
-type validation from `LocalDirectorySourceScanner`; it retains only runtime
-access handling for a target that changes or disappears after registration.
+   **Proof:** Typing a name for a new Source fills the key field, and the
+   operator can replace the generated value before saving.
 
-Do not add a connector type, file-upload workflow, or ingestion-run API for
-this capability.
+4. **Search result count.** After a documentation search, the user sees the
+   number of matching passages returned by that search.
+
+   **Proof:** A completed search with matches displays the matching result
+   count beside its results.
+
+5. **Blank local Markdown files.** A local-directory synchronization skips
+   Markdown files that are empty or contain only whitespace, then continues
+   with the remaining readable documents. A previously indexed file that
+   becomes blank is removed as missing from the completed scan.
+
+   **Proof:** A directory containing one blank Markdown file and one readable
+   Markdown file completes successfully and indexes the readable file.
+
+**Task completion:** Every recorded correction above works in its affected
+story. The cited browser search still works, and the 12-case evaluation data
+and report format remain valid. This is a targeted recheck, not a review of all
+M6 implementation.
+
+**Boundaries:** Include only these corrections and another small M6 correction
+that is first recorded here. Do not add new retrieval capabilities, change the
+agreed quality gate, add chat, add a connector type, add a file-upload workflow
+or ingestion-run API, or make unrelated refactors.
 
 ## Next Milestone (Provisional)
 

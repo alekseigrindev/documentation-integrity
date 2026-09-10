@@ -451,6 +451,7 @@ body {
 }
 
 .ingestion-run-details,
+.ingestion-run-changes,
 .ingestion-run-failure {
   margin: 0.375rem 0 0;
   color: #5f6368;
@@ -490,6 +491,10 @@ body {
 .ingestion-run-failure {
   max-width: 22rem;
   color: #b3261e;
+  text-align: right;
+}
+
+.ingestion-run-changes {
   text-align: right;
 }
 

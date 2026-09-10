@@ -120,6 +120,10 @@
   Teach the reasoning expected from a Senior/Lead Engineer and System
   Architect so that Aleksei can independently explain, design, challenge, and
   review the resulting decisions instead of merely receiving generated code.
+- Aleksei implements backend changes himself by default. For backend work,
+  inspect, explain, review, write or guide tests, and provide precise edits,
+  but do not modify backend files unless Aleksei explicitly asks for that
+  particular implementation to be made.
 - For every non-trivial task, explain the problem being solved, why it belongs
   to the active milestone, the relevant constraints and invariants, the chosen
   approach, its trade-offs, likely failure modes, and the evidence that will

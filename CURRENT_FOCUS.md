@@ -17,21 +17,22 @@ available for retrospective review.
 
 **M7 — Evaluation vertical slice**
 
-**Plain outcome:** An operator selects the synchronized pinned GitHub Actions
-Source in the browser, runs the fixed 12-case lexical evaluation, and receives
-one readable report showing every case and the overall measured result.
+**Plain outcome:** A user searches all synchronized documentation or selected
+Sources in the browser. An operator then selects the synchronized pinned GitHub
+Actions Source, runs the fixed 12-case lexical evaluation, and receives one
+readable report showing every case and the overall measured result.
 
 ## M7 Task Tracker
 
 | Task | Plain outcome | Status |
 | --- | --- | --- |
 | M7.0 Milestone definition | The team agrees the M7 outcome, evidence, delivery tasks, measurements, and boundaries before implementation begins. | Completed 2026-09-11 |
-| M7.1 Browser lexical evaluation | An operator runs the 12 fixed cases for one synchronized Source and sees the complete lexical report in the browser. | Ready to start |
+| M7.1 Source-scoped lexical search and evaluation | A user searches all or selected Sources, and an operator runs the 12 fixed cases for one synchronized Source. | In progress |
 | M7.2 Milestone finalization | The M7 evaluation story works after small fixes and usability improvements found during delivery. | Pending |
 
 ## Active Task
 
-**None — M7T0 is complete. M7T1 is ready to start after this task is committed.**
+**M7T1 — Source-scoped lexical search and evaluation**
 
 ### M7T0 — Milestone definition
 
@@ -41,29 +42,33 @@ one readable report showing every case and the overall measured result.
 evaluation story, its 12-case input, its report measurements, its delivery
 tasks, and its exclusions. M7T0 contains no product implementation.
 
-### M7T1 — Browser lexical evaluation
+### M7T1 — Source-scoped lexical search and evaluation
 
 **Proposed branch:** `feature/m7t1-browser-lexical-evaluation`
 
-**Operator scenario:** An operator selects a synchronized Source, clicks
-**Run lexical evaluation**, and sees a report for the fixed 12 GitHub Actions
-cases. For each query, the report shows the expected locator, whether it is
-found in the first 10 results, its first rank when found, and its duration.
-The summary shows Recall@10, MRR@10, p50 latency, p95 latency, and the corpus
-and evaluation-set versions.
+**User and operator scenario:** A user searches all synchronized documentation
+or selects one or more Sources to limit a lexical search to those Sources. An
+operator selects one synchronized Source, clicks **Run lexical evaluation**,
+and sees a report for the fixed 12 GitHub Actions cases. For each query, the
+report shows the expected locator, whether it is found in the first 10 results,
+its first rank when found, and its duration. The summary shows Recall@10,
+MRR@10, p50 latency, p95 latency, and the corpus and evaluation-set versions.
 
-**What proves it is done:** With the pinned GitHub Actions Source synchronized,
-one browser action produces a 12-case report scoped to that Source. A known
-case shows its expected locator and rank. An unknown Source and a Source with
-no successful synchronization produce safe failure feedback.
+**What proves it is done:** A browser search with no Source selection searches
+the full corpus; a search with selected Sources returns passages only from
+those Sources. With the pinned GitHub Actions Source synchronized, one browser
+action produces a 12-case report scoped to that Source. A known case shows its
+expected locator and rank. An unknown Source and a Source with no successful
+synchronization produce safe failure feedback.
 
-**Boundaries:** The evaluation request names one `sourceId`, and every lexical
-query is limited to that Source's documents. The report is returned for the
-current request only: do not add an evaluation database table or historical
-report storage. Package the existing fixed case data for runtime use, but do
-not change its cases. Do not add vectors, embeddings, hybrid retrieval,
-reranking, chat, a separate deployed evaluation service, or the M8 30-case
-release set.
+**Boundaries:** The existing search accepts an optional list of Source IDs;
+omitting it means the full corpus. The evaluation request names one `sourceId`,
+and every evaluation query is limited to that Source's documents. The report is
+returned for the current request only: do not add an evaluation database table
+or historical report storage. Package the existing fixed case data for runtime
+use, but do not change its cases. Do not add vectors, embeddings, hybrid
+retrieval, reranking, chat, a separate deployed evaluation service, or the M8
+30-case release set.
 
 **Measurements:** Recall@10 is the share of cases whose expected locator
 appears in the first 10 results. MRR@10 is the average of `1 / first matching

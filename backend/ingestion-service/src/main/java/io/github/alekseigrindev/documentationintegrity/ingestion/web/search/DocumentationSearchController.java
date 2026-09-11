@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Set;
+import java.util.UUID;
+
 /**
  * HTTP API for citable full-text documentation lookup.
  */
@@ -21,10 +24,13 @@ public class DocumentationSearchController {
 
     @GetMapping("/search")
     public DocumentationSearchResponse search(
-            @RequestParam("q") @NotBlank String query
+            @RequestParam("q") @NotBlank String query,
+            @RequestParam(name = "sourceId", required = false) Set<UUID> sourceIds
     ) {
         return documentationSearchMapper.toResponse(
-                documentationSearchService.search(query)
-        );
+                documentationSearchService.search(
+                        query,
+                        sourceIds == null ? Set.of() : sourceIds
+                ));
     }
 }

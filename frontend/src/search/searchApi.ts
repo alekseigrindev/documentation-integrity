@@ -26,10 +26,17 @@ export class SearchApiError extends Error {
   }
 }
 
-export async function searchDocumentation(query: string): Promise<SearchMatch[]> {
-  const response = await fetch(
-    `/api/documents/search?q=${encodeURIComponent(query)}`,
-  ).catch(() => {
+export async function searchDocumentation(
+  query: string,
+  sourceIds: Iterable<string> = [],
+): Promise<SearchMatch[]> {
+  const searchParameters = new URLSearchParams({ q: query })
+
+  for (const sourceId of sourceIds) {
+    searchParameters.append('sourceId', sourceId)
+  }
+
+  const response = await fetch(`/api/documents/search?${searchParameters}`).catch(() => {
     throw new SearchApiError(
       'Unable to reach the Documentation Search API',
       'network',

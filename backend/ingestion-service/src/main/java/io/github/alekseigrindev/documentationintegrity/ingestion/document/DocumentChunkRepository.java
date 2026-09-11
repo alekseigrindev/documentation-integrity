@@ -5,7 +5,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UUID> {
@@ -38,7 +40,37 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
             ts_rank_cd(c.search_vector, websearch_to_tsquery('english', :query)) DESC,
             c.id
         """, nativeQuery = true)
-    List<CitableChunkSearchRow> searchCitableChunks(@Param("query") String query);
+    List<CitableChunkSearchRow> searchCitableChunksByQuery(
+            @Param("query") String query
+    );
+
+    @Query(value = """
+        SELECT
+            c.id AS "chunkId",
+            c.ordinal AS "chunkOrdinal",
+            c.content AS "content",
+            c.content_hash AS "chunkContentHash",
+            d.source_id AS "sourceId",
+            d.source_locator AS "sourceLocator",
+            d.canonical_url AS "canonicalUrl",
+            d.product_variant AS "productVariant",
+            d.upstream_version AS "upstreamVersion",
+            d.media_type AS "mediaType",
+            d.acquired_at AS "acquiredAt",
+            d.content_hash AS "documentContentHash",
+            d.attribution AS "attribution"
+        FROM knowledge.chunks c
+            JOIN knowledge.documents d ON d.id = c.document_id
+        WHERE c.search_vector @@ websearch_to_tsquery('english', :query)
+                AND d.source_id IN :sourceIds
+        ORDER BY
+            ts_rank_cd(c.search_vector, websearch_to_tsquery('english', :query)) DESC,
+            c.id
+        """, nativeQuery = true)
+    List<CitableChunkSearchRow> searchCitableChunksByQueryAndSourceIds(
+            @Param("query") String query,
+            @Param("sourceIds") Set<UUID> sourceIds
+    );
 
     interface CitableChunkSearchRow {
 

@@ -11,10 +11,78 @@ available for retrospective review.
 - **M3 — Publisher management vertical slice — Completed 2026-09-02**
 - **M4 — Source management vertical slice — Completed 2026-09-02**
 - **M5 — Source synchronization vertical slice — Completed 2026-09-08**
+- **M6 — Citable lexical search and evaluation preparation — Completed 2026-09-10**
 
 ## Active Milestone
 
-**M6 — Citable lexical search and evaluation preparation**
+**M7 — Evaluation vertical slice**
+
+**Plain outcome:** An operator selects the synchronized pinned GitHub Actions
+Source in the browser, runs the fixed 12-case lexical evaluation, and receives
+one readable report showing every case and the overall measured result.
+
+## M7 Task Tracker
+
+| Task | Plain outcome | Status |
+| --- | --- | --- |
+| M7.0 Milestone definition | The team agrees the M7 outcome, evidence, delivery tasks, measurements, and boundaries before implementation begins. | Completed 2026-09-11 |
+| M7.1 Browser lexical evaluation | An operator runs the 12 fixed cases for one synchronized Source and sees the complete lexical report in the browser. | Ready to start |
+| M7.2 Milestone finalization | The M7 evaluation story works after small fixes and usability improvements found during delivery. | Pending |
+
+## Active Task
+
+**None — M7T0 is complete. M7T1 is ready to start after this task is committed.**
+
+### M7T0 — Milestone definition
+
+**Proposed branch:** `feature/m7t0-milestone-definition`
+
+**What proves it is done:** This tracker defines one source-scoped lexical
+evaluation story, its 12-case input, its report measurements, its delivery
+tasks, and its exclusions. M7T0 contains no product implementation.
+
+### M7T1 — Browser lexical evaluation
+
+**Proposed branch:** `feature/m7t1-browser-lexical-evaluation`
+
+**Operator scenario:** An operator selects a synchronized Source, clicks
+**Run lexical evaluation**, and sees a report for the fixed 12 GitHub Actions
+cases. For each query, the report shows the expected locator, whether it is
+found in the first 10 results, its first rank when found, and its duration.
+The summary shows Recall@10, MRR@10, p50 latency, p95 latency, and the corpus
+and evaluation-set versions.
+
+**What proves it is done:** With the pinned GitHub Actions Source synchronized,
+one browser action produces a 12-case report scoped to that Source. A known
+case shows its expected locator and rank. An unknown Source and a Source with
+no successful synchronization produce safe failure feedback.
+
+**Boundaries:** The evaluation request names one `sourceId`, and every lexical
+query is limited to that Source's documents. The report is returned for the
+current request only: do not add an evaluation database table or historical
+report storage. Package the existing fixed case data for runtime use, but do
+not change its cases. Do not add vectors, embeddings, hybrid retrieval,
+reranking, chat, a separate deployed evaluation service, or the M8 30-case
+release set.
+
+**Measurements:** Recall@10 is the share of cases whose expected locator
+appears in the first 10 results. MRR@10 is the average of `1 / first matching
+rank`, with zero for a case whose expected locator is absent from the first 10.
+Latency is measured for each lexical query; p50 and p95 summarize the 12
+durations.
+
+### M7T2 — Milestone finalization
+
+**Purpose:** Implement only small fixes, usability improvements, and
+acceptance-evidence corrections explicitly noticed during M7T1. Re-run the
+12-case browser evaluation story after those corrections.
+
+**Boundaries:** Do not use finalization to add a new retrieval method, change
+the evaluation set, persist report history, or make unrelated refactors.
+
+## Completed Milestone Record
+
+**M6 — Citable lexical search and evaluation preparation — Completed 2026-09-10**
 
 **Plain outcome:** A user searches synchronized documentation and sees passages
 with citations. The project also has a fixed, reviewable evaluation set and
@@ -42,11 +110,9 @@ later comparison also records typical and slow search latency.
 | M6.0 Milestone definition | The team agrees the M6 outcome, acceptance evidence, delivery tasks, and boundaries before implementation begins. | Completed 2026-09-08 |
 | M6.1 Citable lexical search in the browser | A user enters a documentation query and sees matching passages with their source citation. | Completed 2026-09-08 |
 | M6.2 Evaluation preparation | The project has a fixed 12-case evaluation set and report format tied to the pinned GitHub Actions corpus. | Completed 2026-09-09 |
-| M6.3 Milestone finalization | The M6 user and operator stories work without known M6 defects or usability blockers. | In progress |
+| M6.3 Milestone finalization | The M6 user and operator stories work without known M6 defects or usability blockers. | Completed 2026-09-10 |
 
-## Active Task
-
-**M6T3 — Milestone finalization**
+## M6 Task Details
 
 ### M6T1 — Citable lexical search in the browser
 
@@ -104,17 +170,7 @@ not a review, audit, or reopening of completed M6 work.
    **Proof:** A controlled sync that adds, updates, and removes known documents
    shows matching document counts in **Ingestion runs**.
 
-2. **Local Source targets and validation.** The operator can configure a local
-   Source using either a readable directory or one readable Markdown file, then
-   synchronize that target. `SourceService` validates the readable `file:` URL
-   during registration and update. `LocalDirectorySourceScanner` retains only
-   runtime access handling for a target that changes or disappears afterwards.
-
-   **Proof:** A selected local directory and a selected local Markdown file
-   both synchronize successfully. Invalid local targets are rejected during
-   Source registration or update.
-
-3. **Default Source key.** When creating a Source, the form generates a usable
+2. **Default Source key.** When creating a Source, the form generates a usable
    Source key while the operator types its name. The operator can review or
    replace the generated value; editing an existing Source does not silently
    replace its stored key.
@@ -122,13 +178,13 @@ not a review, audit, or reopening of completed M6 work.
    **Proof:** Typing a name for a new Source fills the key field, and the
    operator can replace the generated value before saving.
 
-4. **Search result count.** After a documentation search, the user sees the
+3. **Search result count.** After a documentation search, the user sees the
    number of matching passages returned by that search.
 
    **Proof:** A completed search with matches displays the matching result
    count beside its results.
 
-5. **Blank local Markdown files.** A local-directory synchronization skips
+4. **Blank local Markdown files.** A local-directory synchronization skips
    Markdown files that are empty or contain only whitespace, then continues
    with the remaining readable documents. A previously indexed file that
    becomes blank is removed as missing from the completed scan.
@@ -136,38 +192,19 @@ not a review, audit, or reopening of completed M6 work.
    **Proof:** A directory containing one blank Markdown file and one readable
    Markdown file completes successfully and indexes the readable file.
 
-**Task completion:** Every recorded correction above works in its affected
-story. The cited browser search still works, and the 12-case evaluation data
-and report format remain valid. This is a targeted recheck, not a review of all
-M6 implementation.
+**Deferred from M6:** Backend-local Source directory/file validation and
+single-file scanner support are recorded in `future_fixes.md`. Browser-side
+selection and upload remain a separate future capability.
+
+**Task completion:** Every remaining recorded correction above works in its
+affected story. The cited browser search still works, and the 12-case
+evaluation data and report format remain valid. This is a targeted recheck, not
+a review of all M6 implementation.
 
 **Boundaries:** Include only these corrections and another small M6 correction
 that is first recorded here. Do not add new retrieval capabilities, change the
 agreed quality gate, add chat, add a connector type, add a file-upload workflow
 or ingestion-run API, or make unrelated refactors.
-
-## Next Milestone (Provisional)
-
-**M7 — Evaluation vertical slice**
-
-**Operator outcome:** With the pinned GitHub Actions Source synchronized, an
-operator starts the 12-case lexical evaluation in the browser and receives one
-report showing every case's result, lexical Recall@10, ranking score, p50/p95
-latency, and the corpus and evaluation-set versions used.
-
-**Frontend surface:** An **Evaluations** screen lets the operator start the
-evaluation and view its completed report.
-
-**What proves it is done:** Starting evaluation for the synchronized pinned
-Source returns a report for all 12 cases. Every case shows whether its expected
-evidence appears in the first 10 results, its rank when present, and duration.
-The report shows lexical summary metrics and safe failure feedback when the
-required Source is unavailable or has not synchronized successfully.
-
-**Boundaries:** The first M7 slice evaluates only the implemented lexical
-method. Do not add vectors, embeddings, hybrid retrieval, reranking, chat, a
-physical evaluation service, a separate database, or the M8 30-case release
-evaluation set. M7 begins with M7T0 planning before implementation.
 
 ### What Proves M6T0 Is Done
 

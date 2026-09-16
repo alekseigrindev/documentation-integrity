@@ -18,6 +18,10 @@ vi.mock('./ingestion-runs/IngestionRuns', () => ({
   default: () => <div>Ingestion run management</div>,
 }))
 
+vi.mock('./evaluation/EvaluationManagement', () => ({
+  default: () => <div>Evaluation management</div>,
+}))
+
 describe('App', () => {
   it('switches between Search, Source, and Publisher management', () => {
     render(<App />)
@@ -37,13 +41,25 @@ describe('App', () => {
     const ingestionRunsButton = screen.getByRole('button', {
       name: 'Ingestion runs',
     })
+    const evaluationsButton = screen.getByRole('button', {
+      name: 'Evaluations',
+    })
 
     expect(searchButton).toHaveAttribute('aria-pressed', 'true')
     expect(sourcesButton).toHaveAttribute('aria-pressed', 'false')
     expect(publishersButton).toHaveAttribute('aria-pressed', 'false')
     expect(ingestionRunsButton).toHaveAttribute('aria-pressed', 'false')
+    expect(evaluationsButton).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByText('Documentation search')).toBeInTheDocument()
     expect(screen.queryByText('Publisher management')).not.toBeInTheDocument()
+
+    fireEvent.click(evaluationsButton)
+
+    expect(evaluationsButton).toHaveAttribute('aria-pressed', 'true')
+    expect(searchButton).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByText('Evaluation management')).toBeInTheDocument()
+
+    fireEvent.click(searchButton)
 
     fireEvent.click(sourcesButton)
 

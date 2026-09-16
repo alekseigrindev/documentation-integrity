@@ -12,112 +12,141 @@ available for retrospective review.
 - **M4 — Source management vertical slice — Completed 2026-09-02**
 - **M5 — Source synchronization vertical slice — Completed 2026-09-08**
 - **M6 — Citable lexical search and evaluation preparation — Completed 2026-09-10**
+- **M7 — Source-scoped lexical search and evaluation — Completed 2026-09-16**
 
 ## Active Milestone
 
-**M7 — Evaluation vertical slice**
+**M8 — Measured vector and hybrid retrieval**
+
+**Plain outcome:** A user can search synchronized documentation with lexical,
+vector, or hybrid retrieval and still receive cited passages. An operator runs
+the same versioned evaluation against each method, sees quality and latency,
+and keeps the best method only when the measurements justify it.
+
+## M8 Task Tracker
+
+| Task | Plain outcome | Status |
+| --- | --- | --- |
+| M8.0 Milestone definition | The team agrees the M8 retrieval methods, quality gate, delivery tasks, runtime constraints, and boundaries before implementation begins. | In progress |
+| M8.1 Embedding-backed vector retrieval | Synchronization creates current embeddings, and a user can run cited vector search over synchronized Sources. | Planned |
+| M8.2 Measured hybrid retrieval selection | A user can choose lexical, vector, or hybrid search, and an operator compares them on the versioned evaluation set. | Planned |
+| M8.3 Milestone finalization | The M8 retrieval story works after small fixes and usability improvements discovered during delivery. | Planned |
+
+## Active Task
+
+**M8T0 — Milestone definition**
+
+### M8T0 — Milestone definition
+
+**Proposed branch:** `feature/m8t0-milestone-definition`
+
+**What proves it is done:** This tracker and the development milestone plan
+agree on one measured vector-and-hybrid retrieval outcome, its quality gate,
+delivery tasks, runtime evidence, and exclusions. M8T0 contains no product
+implementation.
+
+### M8T1 — Embedding-backed vector retrieval
+
+**Proposed branch:** `feature/m8t1-embedding-backed-vector-retrieval`
+
+**User and operator scenario:** An operator synchronizes a Source and the
+system creates an embedding for every current searchable chunk. A user chooses
+vector search, enters a natural-language query, and receives cited passages
+from all synchronized Sources or the selected Sources.
+
+**What proves it is done:** Synchronizing a controlled Source stores one
+current vector per searchable chunk. A known semantic query through the browser
+returns its expected cited passage using vector search. Re-synchronizing
+unchanged content creates no duplicate vectors, and replacing content leaves
+only vectors for current chunks searchable.
+
+**Boundaries:** Use `nomic-embed-text` through ONNX Runtime in the existing
+application boundary and store vectors in PostgreSQL with pgvector. Keep the
+existing Source filter and citation contract. Do not add hybrid fusion,
+reranking, chat, gRPC, a physical retrieval service, or evaluation history.
+Downloaded model artifacts and derived embeddings are not committed to Git.
+
+### M8T2 — Measured hybrid retrieval selection
+
+**Proposed branch:** `feature/m8t2-measured-hybrid-retrieval-selection`
+
+**User and operator scenario:** A user chooses lexical, vector, or hybrid
+search and receives cited passages through the same browser flow. An operator
+runs the versioned evaluation for each method and compares Recall@10, MRR@10,
+p50, and p95 before deciding which method should be the default.
+
+**What proves it is done:** The evaluation set has at least 30 reviewed cases
+covering the release retrieval topics. One controlled Source produces lexical,
+vector, and hybrid reports from the same cases and corpus state. The selected
+default does not reduce Recall@10 relative to lexical search and improves
+MRR@10; if no candidate passes, lexical remains the default and the measured
+rejection is recorded.
+
+**Boundaries:** Fuse lexical and vector rankings with a documented Reciprocal
+Rank Fusion configuration. Retrieval methods remain independently selectable
+and evaluable. Do not add a cross-encoder reranker, answer generation, chat,
+evaluation-report persistence, gRPC, or a separate deployed service.
+
+### M8T3 — Milestone finalization
+
+**Proposed branch:** `feature/m8t3-retrieval-finalization`
+
+**Purpose:** Implement only small fixes, usability improvements, and
+acceptance-evidence corrections explicitly discovered while delivering M8.
+Re-run the selected retrieval and evaluation story after those corrections.
+
+### M8 Quality Gate and Runtime Evidence
+
+- Recall@10 and MRR@10 use the same definitions established in M7.
+- A candidate replaces lexical as the default only when it does not reduce
+  Recall@10 and improves MRR@10 on the same versioned cases and corpus state.
+- Report p50 and p95 for lexical, vector, and hybrid retrieval on documented
+  local hardware.
+- Record the embedding model name, revision, checksum, license, tokenizer,
+  ONNX Runtime configuration, warm-up behavior, and measured memory use.
+
+### M8 Non-goals
+
+- No reranker, diagnosis, generation, chat, or abstention behavior.
+- No Kafka, gRPC, physical retrieval-service split, or evaluation database.
+- No new connector, corpus-rendering expansion, or ingestion UI redesign.
+- No claim that vector or hybrid retrieval is better until the evaluation
+  demonstrates it.
+
+## Completed Milestone Record
+
+**M7 — Source-scoped lexical search and evaluation — Completed 2026-09-16**
 
 **Plain outcome:** A user searches all synchronized documentation or selected
-Sources in the browser. An operator then selects the synchronized pinned GitHub
+Sources in the browser. An operator selects the synchronized pinned GitHub
 Actions Source, runs the fixed 12-case lexical evaluation, and receives one
 readable report showing every case and the overall measured result.
 
-## M7 Task Tracker
+### M7 Task Tracker
 
 | Task | Plain outcome | Status |
 | --- | --- | --- |
 | M7.0 Milestone definition | The team agrees the M7 outcome, evidence, delivery tasks, measurements, and boundaries before implementation begins. | Completed 2026-09-11 |
 | M7.1 Source-scoped lexical search and evaluation | A user searches all or selected Sources, and an operator runs the 12 fixed cases for one synchronized Source. | Completed 2026-09-16 |
-| M7.2 Milestone finalization | The M7 evaluation story works after small fixes and usability improvements found during delivery. | In progress |
+| M7.2 Milestone finalization | The M7 evaluation story works after small fixes and usability improvements found during delivery. | Completed 2026-09-16 |
 
-## Active Task
+### M7 Delivery and Evidence
 
-**M7T2 — Milestone finalization**
+The browser supports full-corpus and multi-Source lexical search with cited
+passages. The evaluation screen runs the fixed 12 cases for one synchronized
+Source, shows per-case rank and duration plus Recall@10, MRR@10, p50, and p95,
+and downloads the current report as JSON.
 
-### M7T0 — Milestone definition
+A real browser evaluation against the synchronized local GitHub Actions Source
+produced the evaluation-set v1 lexical baseline: Recall@10 `0.25`, MRR@10
+`0.13888888888888887`, p50 `2 ms`, and p95 `29 ms`. M7 finalization added
+collapsible long passages and a compact, dismissible multi-Source selector.
+Frontend verification passed with 43 tests, lint, and production build. Backend
+automated evaluation coverage was explicitly deferred and is not claimed as
+completed evidence.
 
-**Proposed branch:** `feature/m7t0-milestone-definition`
-
-**What proves it is done:** This tracker defines one source-scoped lexical
-evaluation story, its 12-case input, its report measurements, its delivery
-tasks, and its exclusions. M7T0 contains no product implementation.
-
-### M7T1 — Source-scoped lexical search and evaluation
-
-**Proposed branch:** `feature/m7t1-browser-lexical-evaluation`
-
-**User and operator scenario:** A user searches all synchronized documentation
-or selects one or more Sources to limit a lexical search to those Sources. An
-operator selects one synchronized Source, clicks **Run lexical evaluation**,
-and sees a report for the fixed 12 GitHub Actions cases. For each query, the
-report shows the expected locator, whether it is found in the first 10 results,
-its first rank when found, and its duration. The summary shows Recall@10,
-MRR@10, p50 latency, p95 latency, the evaluated Source, and the evaluation-set
-version. The operator can download that current report as a JSON file.
-
-**What proves it is done:** A browser search with no Source selection searches
-the full corpus; a search with selected Sources returns passages only from
-those Sources. With the pinned GitHub Actions Source synchronized, one browser
-action produces a 12-case report scoped to that Source. A known case shows its
-expected locator and rank. Downloading that report produces a JSON file with
-the same Source, evaluation-set version, case results, and summary. An unknown
-Source and a Source with no successful synchronization produce safe failure
-feedback.
-
-**Boundaries:** The existing search accepts an optional list of Source IDs;
-omitting it means the full corpus. The evaluation request names one `sourceId`,
-and every evaluation query is limited to that Source's documents. The report is
-returned for the current request only: do not add an evaluation database table
-or historical report storage. A browser download of the current JSON report is
-allowed and does not create server-side history. Package the reviewed fixed
-case data for runtime use. Do not add vectors, embeddings, hybrid retrieval,
-reranking, chat, a separate deployed evaluation service, or the M8 30-case
-release set.
-
-**Measurements:** Recall@10 is the share of cases whose expected locator
-appears in the first 10 results. MRR@10 is the average of `1 / first matching
-rank`, with zero for a case whose expected locator is absent from the first 10.
-Latency is measured for each lexical query; p50 and p95 summarize the 12
-durations.
-
-**Task completion — 2026-09-16:** A real browser evaluation against the
-synchronized local GitHub Actions Source produced the downloadable evaluation
-set v1 lexical baseline: Recall@10 `0.25`, MRR@10 `0.13888888888888887`, p50
-`2 ms`, and p95 `29 ms`. Frontend tests, lint, and production build passed.
-Backend automated evaluation coverage was explicitly deferred by Aleksei and
-is not claimed as completed evidence.
-
-### M7T2 — Milestone finalization
-
-**Proposed branch:** `feature/m7t2-evaluation-finalization`
-
-**Purpose:** Implement only small fixes, usability improvements, and
-acceptance-evidence corrections explicitly noticed during M7T1. Re-run the
-12-case browser evaluation story after those corrections.
-
-### Recorded Corrections
-
-1. **Collapsible long search passages.** Long search results start with a
-   compact preview and provide **Expand** and **Collapse** controls. Short
-   results remain fully visible without an unnecessary control.
-
-   **Proof:** A search returning a passage longer than the preview limit shows
-   shortened content, expands to the complete passage, and collapses again
-   without hiding its citation.
-
-2. **Compact search controls.** Multi-Source selection stays compact as the
-   Source list grows, redundant explanatory text is removed, and the result
-   count appears with the results instead of as standalone content.
-
-   **Proof:** The closed Source selector shows **All Sources** or the selected
-   count and opens a scrollable checkbox menu; the query prompt appears inside
-   the input; and a completed search shows its passage count beside the
-   **Results** heading. Clicking outside an open Source menu closes it.
-
-**Boundaries:** Do not use finalization to add a new retrieval method, change
-the evaluation set, persist report history, or make unrelated refactors.
-
-## Completed Milestone Record
+**Boundaries:** M7 did not add embeddings, vector or hybrid retrieval,
+reranking, chat, report persistence, or a separate evaluation service.
 
 **M6 — Citable lexical search and evaluation preparation — Completed 2026-09-10**
 

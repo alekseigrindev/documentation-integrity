@@ -27,12 +27,12 @@ readable report showing every case and the overall measured result.
 | Task | Plain outcome | Status |
 | --- | --- | --- |
 | M7.0 Milestone definition | The team agrees the M7 outcome, evidence, delivery tasks, measurements, and boundaries before implementation begins. | Completed 2026-09-11 |
-| M7.1 Source-scoped lexical search and evaluation | A user searches all or selected Sources, and an operator runs the 12 fixed cases for one synchronized Source. | In progress |
-| M7.2 Milestone finalization | The M7 evaluation story works after small fixes and usability improvements found during delivery. | Pending |
+| M7.1 Source-scoped lexical search and evaluation | A user searches all or selected Sources, and an operator runs the 12 fixed cases for one synchronized Source. | Completed 2026-09-16 |
+| M7.2 Milestone finalization | The M7 evaluation story works after small fixes and usability improvements found during delivery. | In progress |
 
 ## Active Task
 
-**M7T1 — Source-scoped lexical search and evaluation**
+**M7T2 — Milestone finalization**
 
 ### M7T0 — Milestone definition
 
@@ -80,11 +80,39 @@ rank`, with zero for a case whose expected locator is absent from the first 10.
 Latency is measured for each lexical query; p50 and p95 summarize the 12
 durations.
 
+**Task completion — 2026-09-16:** A real browser evaluation against the
+synchronized local GitHub Actions Source produced the downloadable evaluation
+set v1 lexical baseline: Recall@10 `0.25`, MRR@10 `0.13888888888888887`, p50
+`2 ms`, and p95 `29 ms`. Frontend tests, lint, and production build passed.
+Backend automated evaluation coverage was explicitly deferred by Aleksei and
+is not claimed as completed evidence.
+
 ### M7T2 — Milestone finalization
+
+**Proposed branch:** `feature/m7t2-evaluation-finalization`
 
 **Purpose:** Implement only small fixes, usability improvements, and
 acceptance-evidence corrections explicitly noticed during M7T1. Re-run the
 12-case browser evaluation story after those corrections.
+
+### Recorded Corrections
+
+1. **Collapsible long search passages.** Long search results start with a
+   compact preview and provide **Expand** and **Collapse** controls. Short
+   results remain fully visible without an unnecessary control.
+
+   **Proof:** A search returning a passage longer than the preview limit shows
+   shortened content, expands to the complete passage, and collapses again
+   without hiding its citation.
+
+2. **Compact search controls.** Multi-Source selection stays compact as the
+   Source list grows, redundant explanatory text is removed, and the result
+   count appears with the results instead of as standalone content.
+
+   **Proof:** The closed Source selector shows **All Sources** or the selected
+   count and opens a scrollable checkbox menu; the query prompt appears inside
+   the input; and a completed search shows its passage count beside the
+   **Results** heading. Clicking outside an open Source menu closes it.
 
 **Boundaries:** Do not use finalization to add a new retrieval method, change
 the evaluation set, persist report history, or make unrelated refactors.

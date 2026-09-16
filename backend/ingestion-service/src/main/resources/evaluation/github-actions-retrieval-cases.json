@@ -1,4 +1,5 @@
 {
+  "evaluationSetVersion": 1,
   "corpus": {
     "repository": "https://github.com/github/docs",
     "commit": "062800c32b5d12ccae18d1a4a542e94069d827f8",
@@ -7,7 +8,7 @@
   "cases": [
     {
       "id": "github-token-recursion-prevention",
-      "query": "Why did a pull request created with GITHUB_TOKEN not trigger another workflow?",
+      "query": "Why did adding a label with GITHUB_TOKEN not trigger another workflow?",
       "expectedSourceLocators": [
         "how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow.md"
       ]
@@ -16,7 +17,7 @@
       "id": "github-token-default-permissions",
       "query": "How do I control the permissions granted to GITHUB_TOKEN in a workflow?",
       "expectedSourceLocators": [
-        "concepts/security/github_token.md"
+        "reference/workflows-and-actions/workflow-syntax.md"
       ]
     },
     {
@@ -79,7 +80,7 @@
       "id": "workflow-contexts",
       "query": "Which contexts can I use in a GitHub Actions workflow?",
       "expectedSourceLocators": [
-        "concepts/workflows-and-actions/contexts.md"
+        "reference/workflows-and-actions/contexts.md"
       ]
     },
     {

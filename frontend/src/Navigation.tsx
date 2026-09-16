@@ -1,5 +1,6 @@
 export type ApplicationSection =
   | 'search'
+  | 'evaluations'
   | 'sources'
   | 'publishers'
   | 'ingestion-runs'
@@ -31,6 +32,25 @@ function Navigation({ activeSection, onSectionSelect }: NavigationProps) {
             <path d="m20.71 19.29-4.17-4.17A7.5 7.5 0 1 0 15.12 16l4.17 4.17 1.42-.88ZM5 10a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z" />
           </svg>
           <span>Search</span>
+        </button>
+        <button
+          className={
+            activeSection === 'evaluations'
+              ? 'navigation-item navigation-item-active'
+              : 'navigation-item'
+          }
+          type="button"
+          aria-pressed={activeSection === 'evaluations'}
+          onClick={() => onSectionSelect('evaluations')}
+        >
+          <svg
+            className="navigation-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M4 19h16v2H4v-2Zm1-2V9h3v8H5Zm5 0V3h3v14h-3Zm5 0v-5h3v5h-3Z" />
+          </svg>
+          <span>Evaluations</span>
         </button>
         <button
           className={

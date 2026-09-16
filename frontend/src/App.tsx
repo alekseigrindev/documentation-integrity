@@ -5,6 +5,7 @@ import DocumentationSearch from './search/DocumentationSearch'
 import PublisherManagement from './publishers/PublisherManagement'
 import IngestionRuns from './ingestion-runs/IngestionRuns'
 import SourceManagement from './sources/SourceManagement'
+import EvaluationManagement from './evaluation/EvaluationManagement'
 
 function App() {
   const [activeSection, setActiveSection] =
@@ -27,6 +28,7 @@ function App() {
 
         <main className="main-content">
           {activeSection === 'search' ? <DocumentationSearch /> : null}
+          {activeSection === 'evaluations' ? <EvaluationManagement /> : null}
           {activeSection === 'sources' ? <SourceManagement /> : null}
           {activeSection === 'publishers' ? <PublisherManagement /> : null}
           {activeSection === 'ingestion-runs' ? <IngestionRuns /> : null}

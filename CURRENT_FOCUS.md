@@ -52,23 +52,27 @@ operator selects one synchronized Source, clicks **Run lexical evaluation**,
 and sees a report for the fixed 12 GitHub Actions cases. For each query, the
 report shows the expected locator, whether it is found in the first 10 results,
 its first rank when found, and its duration. The summary shows Recall@10,
-MRR@10, p50 latency, p95 latency, and the corpus and evaluation-set versions.
+MRR@10, p50 latency, p95 latency, the evaluated Source, and the evaluation-set
+version. The operator can download that current report as a JSON file.
 
 **What proves it is done:** A browser search with no Source selection searches
 the full corpus; a search with selected Sources returns passages only from
 those Sources. With the pinned GitHub Actions Source synchronized, one browser
 action produces a 12-case report scoped to that Source. A known case shows its
-expected locator and rank. An unknown Source and a Source with no successful
-synchronization produce safe failure feedback.
+expected locator and rank. Downloading that report produces a JSON file with
+the same Source, evaluation-set version, case results, and summary. An unknown
+Source and a Source with no successful synchronization produce safe failure
+feedback.
 
 **Boundaries:** The existing search accepts an optional list of Source IDs;
 omitting it means the full corpus. The evaluation request names one `sourceId`,
 and every evaluation query is limited to that Source's documents. The report is
 returned for the current request only: do not add an evaluation database table
-or historical report storage. Package the existing fixed case data for runtime
-use, but do not change its cases. Do not add vectors, embeddings, hybrid
-retrieval, reranking, chat, a separate deployed evaluation service, or the M8
-30-case release set.
+or historical report storage. A browser download of the current JSON report is
+allowed and does not create server-side history. Package the reviewed fixed
+case data for runtime use. Do not add vectors, embeddings, hybrid retrieval,
+reranking, chat, a separate deployed evaluation service, or the M8 30-case
+release set.
 
 **Measurements:** Recall@10 is the share of cases whose expected locator
 appears in the first 10 results. MRR@10 is the average of `1 / first matching

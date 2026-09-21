@@ -9,6 +9,33 @@ implementation trigger are demonstrated.
 
 ## High-Priority Future Capabilities
 
+### Candidate M10 — Bounded Synchronization Execution
+
+**User problem:** Starting synchronization for several Sources currently runs
+all of them immediately. Embedding or reranking work can then compete for CPU,
+memory, native-runtime threads, and database connections, making the host
+unresponsive and performance measurements non-representative.
+
+**Required behavior:** Synchronization requests enter a bounded queue when all
+worker capacity is occupied. A configurable global concurrency limit controls
+how many runs may execute, and one Source cannot have overlapping queued or
+running synchronization. Operators can distinguish queued, running, succeeded,
+and failed runs and can see bounded progress without document content appearing
+in logs. A full queue produces an explicit rejection or backpressure result
+rather than unbounded memory growth. Performance reports record the worker
+limit, embedding batch size, model runtime settings, and host resources used by
+the measurement.
+
+**Implementation trigger:** Embedding and reranking establish the actual CPU,
+memory, and latency profile of one synchronization, and concurrent Source runs
+demonstrably contend for the same host resources.
+
+**Why deferred:** M8 must first prove correct vector retrieval and obtain a
+sequential baseline; reranking must also expose its measured resource profile.
+The initial solution should be the smallest bounded in-process queue that meets
+the accepted recovery semantics. Kafka or another broker requires separate
+evidence that durable cross-process delivery is needed.
+
 ### Browser Directory Upload for Remote Ingestion
 
 **User problem:** A user accessing the web application from their own computer

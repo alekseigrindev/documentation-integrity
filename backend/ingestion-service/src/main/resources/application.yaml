@@ -29,3 +29,10 @@ documentation-integrity:
   import:
     checkout-root: ${DOCUMENTATION_CHECKOUT_ROOT}
     max-file-bytes: ${DOCUMENTATION_MAX_FILE_BYTES:1048576}
+
+  embedding:
+    enabled: ${DOCUMENTATION_EMBEDDING_ENABLED:false}
+    model-path: ${DOCUMENTATION_EMBEDDING_MODEL_PATH:}
+    tokenizer-path: ${DOCUMENTATION_EMBEDDING_TOKENIZER_PATH:}
+    max-tokens: ${DOCUMENTATION_EMBEDDING_MAX_TOKENS:512}
+    batch-size: ${DOCUMENTATION_EMBEDDING_BATCH_SIZE:1}

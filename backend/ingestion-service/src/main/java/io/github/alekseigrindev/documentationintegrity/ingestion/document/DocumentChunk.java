@@ -8,6 +8,9 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Array;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -35,4 +38,9 @@ public class DocumentChunk {
 
     @Column(name = "content_hash", nullable = false, length = 64)
     private String contentHash;
+
+    @Column(name = "embedding")
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Array(length = 768)
+    private float[] embedding;
 }

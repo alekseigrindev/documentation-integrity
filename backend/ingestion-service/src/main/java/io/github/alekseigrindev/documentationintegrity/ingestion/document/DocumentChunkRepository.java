@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -72,32 +71,21 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
             @Param("sourceIds") Set<UUID> sourceIds
     );
 
+    boolean existsByDocumentIdAndEmbeddingIsNull(UUID documentId);
+
     interface CitableChunkSearchRow {
-
         UUID getChunkId();
-
         int getChunkOrdinal();
-
         String getContent();
-
         String getChunkContentHash();
-
         UUID getSourceId();
-
         String getSourceLocator();
-
         String getCanonicalUrl();
-
         String getProductVariant();
-
         String getUpstreamVersion();
-
         String getMediaType();
-
         java.time.Instant getAcquiredAt();
-
         String getDocumentContentHash();
-
         String getAttribution();
     }
 }

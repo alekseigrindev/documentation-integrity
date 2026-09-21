@@ -33,7 +33,11 @@ public class DocumentPreparationService {
         List<PreparedChunk> chunks = IntStream.range(0, paragraphs.size())
                 .mapToObj(ordinal -> {
                     String content = paragraphs.get(ordinal);
-                    return new PreparedChunk(ordinal, content, sha256Hex(content));
+                    return new PreparedChunk(
+                            ordinal,
+                            content,
+                            sha256Hex(content)
+                    );
                 })
                 .toList();
 

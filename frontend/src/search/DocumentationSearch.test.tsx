@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DocumentationSearch from './DocumentationSearch'
-import { searchDocumentation } from './searchApi'
+import { listRetrievalMethods, searchDocumentation } from './searchApi'
 import { listSources } from '../sources/sourceApi'
 
 vi.mock('./searchApi', () => ({
+  listRetrievalMethods: vi.fn(),
   searchDocumentation: vi.fn(),
 }))
 
@@ -40,8 +41,13 @@ const source = {
 describe('DocumentationSearch', () => {
   beforeEach(() => {
     vi.mocked(listSources).mockReset()
+    vi.mocked(listRetrievalMethods).mockReset()
     vi.mocked(searchDocumentation).mockReset()
     vi.mocked(listSources).mockResolvedValue([])
+    vi.mocked(listRetrievalMethods).mockResolvedValue([
+      { retrievalMethod: 'LEXICAL', displayName: 'Lexical search' },
+      { retrievalMethod: 'VECTOR', displayName: 'Vector search' },
+    ])
   })
 
   it('shows the number of passages returned by a completed search', async () => {
@@ -49,13 +55,18 @@ describe('DocumentationSearch', () => {
 
     render(<DocumentationSearch />)
 
+    await screen.findByRole('option', { name: 'Lexical search' })
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search query' }), {
       target: { value: 'write permission' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Search' }))
 
     expect(await screen.findByText('2 passages')).toBeInTheDocument()
-    expect(searchDocumentation).toHaveBeenCalledWith('write permission', new Set())
+    expect(searchDocumentation).toHaveBeenCalledWith(
+      'write permission',
+      new Set(),
+      'LEXICAL',
+    )
   })
 
   it('searches only the selected Sources', async () => {
@@ -64,6 +75,7 @@ describe('DocumentationSearch', () => {
 
     render(<DocumentationSearch />)
 
+    await screen.findByRole('option', { name: 'Lexical search' })
     fireEvent.click(await screen.findByText('All Sources'))
     fireEvent.click(await screen.findByRole('checkbox', { name: 'GitHub Docs' }))
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search query' }), {
@@ -76,6 +88,28 @@ describe('DocumentationSearch', () => {
     expect(searchDocumentation).toHaveBeenCalledWith(
       'write permission',
       new Set([source.id]),
+      'LEXICAL',
+    )
+  })
+
+  it('sends the selected vector method with the search request', async () => {
+    vi.mocked(searchDocumentation).mockResolvedValue(matches)
+
+    render(<DocumentationSearch />)
+
+    fireEvent.change(await screen.findByLabelText('Search method'), {
+      target: { value: 'VECTOR' },
+    })
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search query' }), {
+      target: { value: 'larger runners' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(await screen.findByText('2 passages')).toBeInTheDocument()
+    expect(searchDocumentation).toHaveBeenCalledWith(
+      'larger runners',
+      new Set(),
+      'VECTOR',
     )
   })
 
@@ -109,6 +143,7 @@ describe('DocumentationSearch', () => {
 
     render(<DocumentationSearch />)
 
+    await screen.findByRole('option', { name: 'Lexical search' })
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search query' }), {
       target: { value: 'write permission' },
     })

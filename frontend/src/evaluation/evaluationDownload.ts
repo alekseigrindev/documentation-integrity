@@ -1,4 +1,5 @@
-import type { LexicalEvaluationReport } from './evaluationApi'
+import type { RetrievalMethod } from '../search/searchApi'
+import type { EvaluationReport } from './evaluationApi'
 
 function safeFilePart(value: string) {
   return value
@@ -8,15 +9,19 @@ function safeFilePart(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-export function serializeEvaluationReport(report: LexicalEvaluationReport) {
-  return JSON.stringify(report, null, 2)
+export function serializeEvaluationReport(
+  report: EvaluationReport,
+  retrievalMethod: RetrievalMethod,
+) {
+  return JSON.stringify({ ...report, retrievalMethod }, null, 2)
 }
 
 export function downloadEvaluationReport(
-  report: LexicalEvaluationReport,
+  report: EvaluationReport,
   sourceKey: string,
+  retrievalMethod: RetrievalMethod,
 ) {
-  const blob = new Blob([serializeEvaluationReport(report)], {
+  const blob = new Blob([serializeEvaluationReport(report, retrievalMethod)], {
     type: 'application/json',
   })
   const downloadUrl = URL.createObjectURL(blob)
@@ -25,7 +30,7 @@ export function downloadEvaluationReport(
 
   anchor.href = downloadUrl
   anchor.download =
-    `lexical-evaluation-${fileSource}` +
+    `${retrievalMethod.toLowerCase()}-evaluation-${fileSource}` +
     `-v${report.evaluationSetVersion}.json`
   document.body.append(anchor)
   anchor.click()

@@ -1,6 +1,12 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { listSources, type Source } from '../sources/sourceApi'
-import { searchDocumentation, type SearchMatch } from './searchApi'
+import {
+  listRetrievalMethods,
+  searchDocumentation,
+  type RetrievalMethod,
+  type RetrievalMethodOption,
+  type SearchMatch,
+} from './searchApi'
 
 const COLLAPSED_CONTENT_LENGTH = 600
 
@@ -11,6 +17,10 @@ function DocumentationSearch() {
     () => new Set(),
   )
   const [matches, setMatches] = useState<SearchMatch[] | null>(null)
+  const [retrievalMethods, setRetrievalMethods] =
+    useState<RetrievalMethodOption[] | null>(null)
+  const [retrievalMethod, setRetrievalMethod] = useState<RetrievalMethod | ''>('')
+  const [retrievalMethodsFailed, setRetrievalMethodsFailed] = useState(false)
   const [searchFailed, setSearchFailed] = useState(false)
   const [sourceLoadFailed, setSourceLoadFailed] = useState(false)
   const [searching, setSearching] = useState(false)
@@ -25,6 +35,18 @@ function DocumentationSearch() {
       .catch(() => {
         setSourceLoadFailed(true)
         setSources([])
+      })
+  }, [])
+
+  useEffect(() => {
+    listRetrievalMethods()
+      .then((methods) => {
+        setRetrievalMethods(methods)
+        setRetrievalMethod(methods[0]?.retrievalMethod ?? '')
+      })
+      .catch(() => {
+        setRetrievalMethodsFailed(true)
+        setRetrievalMethods([])
       })
   }, [])
 
@@ -49,7 +71,7 @@ function DocumentationSearch() {
     event.preventDefault()
 
     const normalizedQuery = query.trim()
-    if (!normalizedQuery) {
+    if (!normalizedQuery || !retrievalMethod) {
       return
     }
 
@@ -59,7 +81,11 @@ function DocumentationSearch() {
 
     try {
       setMatches(
-        await searchDocumentation(normalizedQuery, selectedSourceIds),
+        await searchDocumentation(
+          normalizedQuery,
+          selectedSourceIds,
+          retrievalMethod,
+        ),
       )
     } catch {
       setSearchFailed(true)
@@ -127,10 +153,41 @@ function DocumentationSearch() {
           <button
             className="primary-button"
             type="submit"
-            disabled={searching || !query.trim()}
+            disabled={searching || !query.trim() || !retrievalMethod}
           >
             Search
           </button>
+        </div>
+        <div className="retrieval-method-selector">
+          <label htmlFor="search-retrieval-method">Search method</label>
+          <select
+            id="search-retrieval-method"
+            value={retrievalMethod}
+            disabled={searching || retrievalMethods === null || retrievalMethodsFailed}
+            onChange={(event) =>
+              setRetrievalMethod(event.target.value as RetrievalMethod)
+            }
+          >
+            {retrievalMethods === null ? (
+              <option value="">Loading methods…</option>
+            ) : retrievalMethods.length === 0 ? (
+              <option value="">No search methods available</option>
+            ) : (
+              retrievalMethods.map((method) => (
+                <option
+                  key={method.retrievalMethod}
+                  value={method.retrievalMethod}
+                >
+                  {method.displayName}
+                </option>
+              ))
+            )}
+          </select>
+          {retrievalMethodsFailed ? (
+            <p className="request-error" role="alert">
+              Unable to load search methods. Try reloading the page.
+            </p>
+          ) : null}
         </div>
         <fieldset className="search-source-selector" disabled={searching}>
           <legend>Sources</legend>

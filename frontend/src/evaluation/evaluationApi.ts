@@ -1,3 +1,5 @@
+import type { RetrievalMethod } from '../search/searchApi'
+
 export type LexicalEvaluationCaseResult = {
   caseId: string
   query: string
@@ -15,7 +17,7 @@ export type LexicalEvaluationSummary = {
   p95LatencyMs: number
 }
 
-export type LexicalEvaluationReport = {
+export type EvaluationReport = {
   sourceId: string
   evaluationSetVersion: number
   caseResults: LexicalEvaluationCaseResult[]
@@ -42,10 +44,12 @@ export class EvaluationApiError extends Error {
   }
 }
 
-export async function runLexicalEvaluation(
+export async function runEvaluation(
   sourceId: string,
-): Promise<LexicalEvaluationReport> {
-  const response = await fetch('/api/admin/evaluations/lexical', {
+  retrievalMethod: RetrievalMethod,
+): Promise<EvaluationReport> {
+  const parameters = new URLSearchParams({ method: retrievalMethod })
+  const response = await fetch(`/api/admin/evaluations/lexical?${parameters}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -70,5 +74,5 @@ export async function runLexicalEvaluation(
     )
   }
 
-  return (await response.json()) as LexicalEvaluationReport
+  return (await response.json()) as EvaluationReport
 }

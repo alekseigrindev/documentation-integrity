@@ -88,4 +88,60 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
         String getDocumentContentHash();
         String getAttribution();
     }
+
+    @Query("""
+        SELECT
+            c.id AS chunkId
+            , c.ordinal AS chunkOrdinal
+            , c.content AS content
+            , c.contentHash AS chunkContentHash
+            , d.sourceId AS sourceId
+            , d.sourceLocator AS sourceLocator
+            , CAST(d.canonicalUrl as String) AS canonicalUrl
+            , d.productVariant AS productVariant
+            , d.upstreamVersion AS upstreamVersion
+            , d.mediaType AS mediaType
+            , d.acquiredAt AS acquiredAt
+            , d.contentHash AS documentContentHash
+            , d.attribution AS attribution
+        FROM DocumentChunk c
+            JOIN DocumentationDocument d ON c.documentId = d.id
+        WHERE c.embedding IS NOT NULL
+        ORDER BY 
+            cosine_distance(c.embedding, :queryEmbedding),
+            c.id
+        LIMIT 10
+    """)
+    List<CitableChunkSearchRow> searchCitableChunksByEmbedding(
+            @Param("queryEmbedding") float[] queryEmbedding
+    );
+
+    @Query("""
+    SELECT
+        c.id AS chunkId,
+        c.ordinal AS chunkOrdinal,
+        c.content AS content,
+        c.contentHash AS chunkContentHash,
+        d.sourceId AS sourceId,
+        d.sourceLocator AS sourceLocator,
+        CAST(d.canonicalUrl AS String) AS canonicalUrl,
+        d.productVariant AS productVariant,
+        d.upstreamVersion AS upstreamVersion,
+        d.mediaType AS mediaType,
+        d.acquiredAt AS acquiredAt,
+        d.contentHash AS documentContentHash,
+        d.attribution AS attribution
+    FROM DocumentChunk c
+    JOIN DocumentationDocument d ON d.id = c.documentId
+    WHERE c.embedding IS NOT NULL
+        AND d.sourceId IN :sourceIds
+    ORDER BY
+        cosine_distance(c.embedding, :queryEmbedding),
+        c.id
+    LIMIT 10
+    """)
+    List<CitableChunkSearchRow> searchCitableChunksByEmbeddingAndSourceIds(
+            @Param("queryEmbedding") float[] queryEmbedding,
+            @Param("sourceIds") Set<UUID> sourceIds
+    );
 }

@@ -2,12 +2,10 @@ package io.github.alekseigrindev.documentationintegrity.ingestion.web.admin.eval
 
 import io.github.alekseigrindev.documentationintegrity.ingestion.evaluation.LexicalEvaluationReport;
 import io.github.alekseigrindev.documentationintegrity.ingestion.evaluation.LexicalEvaluationService;
+import io.github.alekseigrindev.documentationintegrity.ingestion.search.RetrievalMethod;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "/api/admin/evaluations")
@@ -18,9 +16,12 @@ public class EvaluationAdminController {
 
     @PostMapping("/lexical")
     public LexicalEvaluationReport evaluateLexical(
-            @Valid @RequestBody LexicalEvaluationRequest request
+            @Valid @RequestBody LexicalEvaluationRequest request,
+            @RequestParam(name = "method", defaultValue = "LEXICAL") RetrievalMethod retrievalMethod
     ) {
-        return evaluationService.evaluate(request.sourceId());
+        return evaluationService.evaluate(
+                request.sourceId(),
+                retrievalMethod);
     }
 
 }

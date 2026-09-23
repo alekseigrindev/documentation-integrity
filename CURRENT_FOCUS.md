@@ -29,7 +29,11 @@ cost.
 
 | Task | Plain outcome | Status |
 | --- | --- | --- |
-| M9.0 Milestone definition | The team defines passage-level relevance evidence, reranking metrics, candidate retrieval, runtime limits, and delivery boundaries before implementation. | In progress |
+| M9.0 Milestone definition | The team defines passage-level relevance evidence, reranking metrics, candidate retrieval, runtime limits, and delivery boundaries before implementation. | Ready to commit |
+| M9.1 Passage-level retrieval evaluation | The operator evaluates exact reviewed passages rather than treating every chunk from the expected document as relevant. | Planned |
+| M9.2 Reranker integration | A user selects reranked retrieval and receives reordered cited passages through the existing search flow. | Planned |
+| M9.3 Measured reranker selection | The operator compares the working reranker with the strongest baseline and accepts or rejects it using the frozen gate. | Planned |
+| M9.4 Milestone finalization | The M9 evaluation and reranking story works after small corrections discovered during delivery. | Planned |
 
 ## Active Task
 
@@ -49,6 +53,119 @@ expected document as a hit. Its reported `Recall@10` is therefore a
 document-level HitRate@10, not passage-level recall, and it does not calculate
 precision. M9 must correct this methodology before using it to accept or reject
 the reranker.
+
+### M9T1 — Passage-level retrieval evaluation
+
+**Proposed branch:** `feature/m9t1-passage-level-retrieval-evaluation`
+
+**User and operator scenario:** An operator reviews at least 30 realistic
+GitHub Actions questions and marks the exact passages that directly answer or
+support each question. The operator runs lexical, vector, and hybrid retrieval
+against the same pinned corpus and receives a report that measures returned
+passages rather than accepting any chunk from the correct document.
+
+**What proves it is done:** Evaluation-set version 2 contains at least 30
+reviewed cases. Every relevant passage is identified by `sourceLocator` and the
+backend-produced `chunkContentHash`, with relevance `2` for a direct answer and
+`1` for useful supporting context. A controlled check proves that a different
+chunk from the same document is not counted as relevant. The report gives
+HitRate@10, Precision@10, reviewed Recall@10, MRR@10, nDCG@10, and p50/p95
+latency for lexical, vector, and hybrid retrieval. A small hand-calculated
+fixture proves the metric formulas.
+
+**Evaluation rules:** The pinned corpus revision and evaluation-set version are
+recorded with the judgments. Relevant passages are reviewed from a pooled set
+of candidates returned by the baseline methods; unreviewed passages are not
+silently claimed to be irrelevant. `Recall@10` is explicitly limited to the
+reviewed relevant-passage pool. Runtime database UUIDs are not stored as
+evaluation identities. When corpus rendering or chunking changes, affected
+hashes are reviewed and the evaluation-set version is incremented.
+
+**Boundaries:** Generalize the existing evaluation records, service, API,
+downloaded report, and frontend display only as required by the corrected
+metrics. Do not download or execute a reranker, persist reports in the
+database, add evaluation history, or create a separate evaluation service.
+
+### M9T2 — Reranker integration
+
+**Proposed branch:** `feature/m9t2-reranker-integration`
+
+**User and operator scenario:** A user chooses reranked retrieval and receives
+the ten highest-ranked cited passages for all Sources or selected Sources. If
+the model is unavailable, the method is not offered; a request that fails
+during reranking returns an explicit failure instead of silently presenting
+baseline results as reranked results.
+
+**Retrieval flow:** Lexical and vector retrieval each produce up to 50
+candidates. Reciprocal Rank Fusion deduplicates and orders the combined pool
+without applying the final ten-result cutoff. `bge-reranker-v2-m3` scores at
+most the first 50 fused candidates for the query through ONNX Runtime. The
+application sorts those scores and returns ten existing cited passages; the
+reranker cannot invent content or change citation provenance.
+
+**What proves it is done:** A controlled case places a reviewed relevant
+passage inside the 50-candidate pool and proves that reranking can move it into
+the returned top 10 without changing its citation. Source filtering still
+works. The method is exposed to Search and Evaluation only while the reranker
+is available. Model loading and one bounded request complete without exhausting
+the documented Apple M3 Max 36 GB host. This task proves a working retrieval
+path but does not claim that reranking improves quality or should become the
+default.
+
+**Boundaries:** Use `bge-reranker-v2-m3` through ONNX Runtime inside the
+existing application boundary with bounded batch and candidate counts. Record
+the exact model revision, checksum, license, tokenizer, warm-up procedure, and
+runtime settings. Do not add generation, chat, abstention, Kafka, gRPC, a
+physical retrieval-service split, GPU support, or evaluation-report storage.
+Do not tune or accept the reranker from an ad hoc browser example.
+
+### M9T3 — Measured reranker selection
+
+**Proposed branch:** `feature/m9t3-measured-reranker-selection`
+
+**User and operator scenario:** An operator runs the same version-2
+passage-level evaluation for the strongest non-reranked baseline and the
+working reranked method. The report shows candidate coverage, passage quality,
+latency, and memory, and the operator records whether the reranker is retained
+or rejected.
+
+**What proves it is done:** Candidate HitRate@50 is reported so the reranker is
+not blamed for relevant passages missing from its input. The two configurations
+run against the same pinned corpus, reviewed judgments, candidate limit, result
+limit, model configuration, and documented host. The report and milestone
+record contain the measurements and an explicit accept-or-reject decision.
+
+**Acceptance gate:** Relative to the strongest non-reranked baseline,
+reranking must improve nDCG@10, must not reduce HitRate@10 or reviewed
+Recall@10, and must keep warmed end-to-end p95 below 3 seconds on the documented
+Apple M3 Max 36 GB host. MRR@10, Precision@10, p50/p95, peak process memory,
+candidate count, and reranker batch size are also reported. Failure, model
+unavailability, or excessive resource use rejects the reranked method rather
+than silently falling back under the same method name.
+
+**Boundaries:** Use the implementation completed in M9T2 and the evaluation
+methodology completed in M9T1. Do not change judgments, candidate depth,
+quality thresholds, or latency budget after seeing the final comparison. Do
+not add another model, tune against individual evaluation cases, or implement
+generation, chat, or report persistence.
+
+### M9T4 — Milestone finalization
+
+**Proposed branch:** `feature/m9t4-reranking-finalization`
+
+**Purpose:** Implement only small fixes, usability improvements, and
+acceptance-evidence corrections explicitly discovered during M9. Re-run the
+passage-level baseline and reranked comparison after those corrections. Do not
+add a new retrieval capability or relax the frozen quality and runtime gate.
+
+### M9 Non-goals
+
+- No answer generation, diagnosis, chat, or abstention behavior.
+- No evaluation history or report database.
+- No Kafka, gRPC, physical retrieval-service split, or GPU execution.
+- No use of generated chunk UUIDs as durable evaluation identities.
+- No claim that reranking improves retrieval unless the version-2 evaluation
+  passes the frozen quality and runtime gate.
 
 ## Completed Milestone Record
 

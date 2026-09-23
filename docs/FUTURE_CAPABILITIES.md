@@ -78,6 +78,32 @@ flow. A settings UI before a second measured method exists would create empty
 configuration. Managing separately deployed services would additionally require
 authentication, validation, health checks, audit history, and rollback rules.
 
+## Per-Result Retrieval Diagnostics
+
+**User problem:** When investigating hybrid retrieval behavior, an operator or
+developer cannot currently see whether a returned chunk was found by lexical
+retrieval, vector retrieval, or both, or inspect the ranking evidence used to
+place it in the final result list.
+
+**Required behavior:** An optional diagnostic representation identifies the
+retrieval methods that contributed each returned chunk and exposes ranking
+metadata with explicit semantics. It must distinguish source-specific values
+such as lexical rank, vector rank, and fusion score rather than presenting one
+ambiguous generic `score`. Retrieval-method membership is represented as a set
+because duplicates and ordering have no meaning. Normal search responses remain
+focused on cited passages unless the accepted operator workflow requires these
+diagnostics.
+
+**Implementation trigger:** Measured hybrid retrieval produces a ranking issue
+that cannot be explained from final ranks and evaluation metrics alone, or an
+accepted diagnostics UI or report requires per-result contribution evidence.
+
+**Why deferred:** M8T2 selects retrieval behavior using Recall@10, MRR@10,
+p50, and p95. Those metrics depend on final result order, not on exposing
+internal scores. Adding diagnostics now would expand the search DTO, mapper,
+frontend contract, and UI without contributing to the current acceptance
+evidence.
+
 ## Publisher Soft Deletion
 
 **User problem:** An operator must be able to revoke a publisher without

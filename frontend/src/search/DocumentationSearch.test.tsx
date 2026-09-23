@@ -47,6 +47,7 @@ describe('DocumentationSearch', () => {
     vi.mocked(listRetrievalMethods).mockResolvedValue([
       { retrievalMethod: 'LEXICAL', displayName: 'Lexical search' },
       { retrievalMethod: 'VECTOR', displayName: 'Vector search' },
+      { retrievalMethod: 'HYBRID', displayName: 'Hybrid search' },
     ])
   })
 
@@ -110,6 +111,27 @@ describe('DocumentationSearch', () => {
       'larger runners',
       new Set(),
       'VECTOR',
+    )
+  })
+
+  it('sends the selected hybrid method with the search request', async () => {
+    vi.mocked(searchDocumentation).mockResolvedValue(matches)
+
+    render(<DocumentationSearch />)
+
+    fireEvent.change(await screen.findByLabelText('Search method'), {
+      target: { value: 'HYBRID' },
+    })
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search query' }), {
+      target: { value: 'failed workflow' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(await screen.findByText('2 passages')).toBeInTheDocument()
+    expect(searchDocumentation).toHaveBeenCalledWith(
+      'failed workflow',
+      new Set(),
+      'HYBRID',
     )
   })
 

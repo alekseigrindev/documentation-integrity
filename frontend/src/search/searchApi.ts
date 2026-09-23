@@ -6,7 +6,7 @@ export type SearchMatch = {
   attribution: string
 }
 
-export type RetrievalMethod = 'LEXICAL' | 'VECTOR'
+export type RetrievalMethod = 'LEXICAL' | 'VECTOR' | 'HYBRID'
 
 export type RetrievalMethodOption = {
   retrievalMethod: RetrievalMethod

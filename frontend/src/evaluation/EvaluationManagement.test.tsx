@@ -73,6 +73,7 @@ describe('EvaluationManagement', () => {
     vi.mocked(listRetrievalMethods).mockResolvedValue([
       { retrievalMethod: 'LEXICAL', displayName: 'Lexical search' },
       { retrievalMethod: 'VECTOR', displayName: 'Vector search' },
+      { retrievalMethod: 'HYBRID', displayName: 'Hybrid search' },
     ])
   })
 
@@ -129,6 +130,30 @@ describe('EvaluationManagement', () => {
       report,
       source.sourceKey,
       'VECTOR',
+    )
+  })
+
+  it('runs hybrid evaluation and labels its report correctly', async () => {
+    vi.mocked(runEvaluation).mockResolvedValue(report)
+
+    render(<EvaluationManagement />)
+
+    fireEvent.change(await screen.findByLabelText('Source'), {
+      target: { value: source.id },
+    })
+    fireEvent.change(await screen.findByLabelText('Search method'), {
+      target: { value: 'HYBRID' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Run evaluation' }))
+
+    expect(await screen.findByText('Hybrid search evaluation report')).toBeInTheDocument()
+    expect(runEvaluation).toHaveBeenCalledWith(source.id, 'HYBRID')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save evaluation results' }))
+    expect(downloadEvaluationReport).toHaveBeenCalledWith(
+      report,
+      source.sourceKey,
+      'HYBRID',
     )
   })
 

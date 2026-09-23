@@ -13,10 +13,46 @@ available for retrospective review.
 - **M5 — Source synchronization vertical slice — Completed 2026-09-08**
 - **M6 — Citable lexical search and evaluation preparation — Completed 2026-09-10**
 - **M7 — Source-scoped lexical search and evaluation — Completed 2026-09-16**
+- **M8 — Measured vector and hybrid retrieval — Completed 2026-09-23**
 
 ## Active Milestone
 
-**M8 — Measured vector and hybrid retrieval**
+**M9 — Measured reranking**
+
+**Plain outcome:** A user can run a reranked retrieval configuration and still
+receive cited passages. An operator compares it with the lexical, vector, and
+hybrid baselines using passage-level relevance judgments and retains the
+reranker only when the measured quality gain justifies its latency and resource
+cost.
+
+## M9 Task Tracker
+
+| Task | Plain outcome | Status |
+| --- | --- | --- |
+| M9.0 Milestone definition | The team defines passage-level relevance evidence, reranking metrics, candidate retrieval, runtime limits, and delivery boundaries before implementation. | In progress |
+
+## Active Task
+
+**M9T0 — Milestone definition**
+
+**Proposed branch:** `feature/m9t0-milestone-definition`
+
+**What proves it is done:** The tracker defines stable passage-level relevance
+judgments that do not depend on regenerated database UUIDs, correct names and
+formulas for the evaluation metrics, the reranker input and output contract,
+the baseline configurations, the latency and resource budget, delivery tasks,
+and explicit non-goals. M9T0 contains no product implementation or model
+download.
+
+**Planning constraint:** The M7/M8 evaluator treats any returned chunk from an
+expected document as a hit. Its reported `Recall@10` is therefore a
+document-level HitRate@10, not passage-level recall, and it does not calculate
+precision. M9 must correct this methodology before using it to accept or reject
+the reranker.
+
+## Completed Milestone Record
+
+**M8 — Measured vector and hybrid retrieval — Completed 2026-09-23**
 
 **Plain outcome:** A user can search synchronized documentation with lexical,
 vector, or hybrid retrieval and still receive cited passages. An operator runs
@@ -29,10 +65,10 @@ and keeps the best method only when the measurements justify it.
 | --- | --- | --- |
 | M8.0 Milestone definition | The team agrees the M8 retrieval methods, quality gate, delivery tasks, runtime constraints, and boundaries before implementation begins. | Completed |
 | M8.1 Embedding-backed vector retrieval | Synchronization creates current embeddings, and a user can run cited vector search over synchronized Sources. | Completed 2026-09-22 |
-| M8.2 Measured hybrid retrieval selection | A user can choose lexical, vector, or hybrid search, and an operator compares them on the versioned evaluation set. | In progress |
-| M8.3 Milestone finalization | The M8 retrieval story works after small fixes and usability improvements discovered during delivery. | Planned |
+| M8.2 Measured hybrid retrieval selection | A user can choose lexical, vector, or hybrid search, and an operator compares them on the versioned evaluation set. | Completed 2026-09-23 |
+| M8.3 Milestone finalization | The M8 retrieval story works after small fixes and usability improvements discovered during delivery. | Completed 2026-09-23 |
 
-## Active Task
+## M8 Delivery Tasks
 
 **M8T2 — Measured hybrid retrieval selection**
 
@@ -96,6 +132,15 @@ Rank Fusion configuration. Retrieval methods remain independently selectable
 and evaluable. Do not add a cross-encoder reranker, answer generation, chat,
 evaluation-report persistence, gRPC, or a separate deployed service.
 
+**M8T2 evidence:** The browser exposed lexical, vector, and hybrid retrieval in
+both Search and Evaluation. On the same unchanged 12-case corpus, lexical found
+3/12 expected documents (reported Recall@10 0.25, MRR@10 0.139, p50 2 ms,
+p95 29 ms), vector found 12/12 (1.00, 0.581, 18 ms, 36 ms), and hybrid RRF
+found 11/12 (0.917, 0.568, 22 ms, 99 ms). Hybrid lost the
+`environment-secrets` case that vector returned at rank 7 because RRF promoted
+candidates supported by both methods. The reports are preliminary
+document-level evidence; no default was changed from them.
+
 ### M8T3 — Milestone finalization
 
 **Proposed branch:** `feature/m8t3-retrieval-finalization`
@@ -104,7 +149,15 @@ evaluation-report persistence, gRPC, or a separate deployed service.
 acceptance-evidence corrections explicitly discovered while delivering M8.
 Re-run the selected retrieval and evaluation story after those corrections.
 
-### M8 Quality Gate and Runtime Evidence
+**Finalization decision:** Search and downloadable evaluation reports were
+rechecked through the browser after hybrid retrieval was added. The planned
+30-case gate was deliberately deferred when review showed that the evaluator
+judges whole documents rather than relevant passages and therefore does not
+measure passage precision or recall. M9T0 owns correction of that methodology
+before reranker evaluation; M8 does not claim a release-quality retrieval
+selection.
+
+### Original M8 Quality Gate and Runtime Evidence
 
 - Recall@10 and MRR@10 use the same definitions established in M7.
 - A candidate replaces lexical as the default only when it does not reduce
@@ -113,6 +166,10 @@ Re-run the selected retrieval and evaluation story after those corrections.
   local hardware.
 - Record the embedding model name, revision, checksum, license, tokenizer,
   ONNX Runtime configuration, warm-up behavior, and measured memory use.
+
+The 30-case quality gate was not completed and is not claimed as M8 evidence.
+It is replaced by a passage-level evaluation definition in M9T0 before measured
+reranking begins.
 
 ### M8 Non-goals
 

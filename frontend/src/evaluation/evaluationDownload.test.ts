@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { serializeEvaluationReport } from './evaluationDownload'
-import type { LexicalEvaluationReport } from './evaluationApi'
+import type { EvaluationReport } from './evaluationApi'
 
 describe('serializeEvaluationReport', () => {
   it('preserves the complete evaluation report as JSON', () => {
-    const report: LexicalEvaluationReport = {
+    const report: EvaluationReport = {
       sourceId: 'source-id',
       evaluationSetVersion: 1,
       caseResults: [],
@@ -18,6 +18,9 @@ describe('serializeEvaluationReport', () => {
       },
     }
 
-    expect(JSON.parse(serializeEvaluationReport(report))).toEqual(report)
+    expect(JSON.parse(serializeEvaluationReport(report, 'VECTOR'))).toEqual({
+      retrievalMethod: 'VECTOR',
+      ...report,
+    })
   })
 })

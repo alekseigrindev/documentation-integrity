@@ -1,16 +1,21 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { listSources } from '../sources/sourceApi'
+import { listRetrievalMethods } from '../search/searchApi'
 import EvaluationManagement from './EvaluationManagement'
-import { runLexicalEvaluation } from './evaluationApi'
+import { runEvaluation } from './evaluationApi'
 import { downloadEvaluationReport } from './evaluationDownload'
 
 vi.mock('../sources/sourceApi', () => ({
   listSources: vi.fn(),
 }))
 
+vi.mock('../search/searchApi', () => ({
+  listRetrievalMethods: vi.fn(),
+}))
+
 vi.mock('./evaluationApi', () => ({
-  runLexicalEvaluation: vi.fn(),
+  runEvaluation: vi.fn(),
 }))
 
 vi.mock('./evaluationDownload', () => ({
@@ -61,25 +66,32 @@ const report = {
 describe('EvaluationManagement', () => {
   beforeEach(() => {
     vi.mocked(listSources).mockReset()
-    vi.mocked(runLexicalEvaluation).mockReset()
+    vi.mocked(listRetrievalMethods).mockReset()
+    vi.mocked(runEvaluation).mockReset()
     vi.mocked(downloadEvaluationReport).mockReset()
     vi.mocked(listSources).mockResolvedValue([source])
+    vi.mocked(listRetrievalMethods).mockResolvedValue([
+      { retrievalMethod: 'LEXICAL', displayName: 'Lexical search' },
+      { retrievalMethod: 'VECTOR', displayName: 'Vector search' },
+      { retrievalMethod: 'HYBRID', displayName: 'Hybrid search' },
+    ])
   })
 
   it('runs and displays a source-scoped lexical evaluation', async () => {
-    vi.mocked(runLexicalEvaluation).mockResolvedValue(report)
+    vi.mocked(runEvaluation).mockResolvedValue(report)
 
     render(<EvaluationManagement />)
 
     fireEvent.change(await screen.findByLabelText('Source'), {
       target: { value: source.id },
     })
+    await screen.findByRole('option', { name: 'Lexical search' })
     fireEvent.click(
-      screen.getByRole('button', { name: 'Run lexical evaluation' }),
+      screen.getByRole('button', { name: 'Run evaluation' }),
     )
 
-    expect(await screen.findByText('Lexical evaluation report')).toBeInTheDocument()
-    expect(runLexicalEvaluation).toHaveBeenCalledWith(source.id)
+    expect(await screen.findByText('Lexical search evaluation report')).toBeInTheDocument()
+    expect(runEvaluation).toHaveBeenCalledWith(source.id, 'LEXICAL')
     expect(screen.getByText('1 / 2')).toBeInTheDocument()
     expect(screen.getByText('50.0%')).toBeInTheDocument()
     expect(screen.getByText('0.250')).toBeInTheDocument()
@@ -93,11 +105,60 @@ describe('EvaluationManagement', () => {
     expect(downloadEvaluationReport).toHaveBeenCalledWith(
       report,
       source.sourceKey,
+      'LEXICAL',
+    )
+  })
+
+  it('runs vector evaluation and labels its report correctly', async () => {
+    vi.mocked(runEvaluation).mockResolvedValue(report)
+
+    render(<EvaluationManagement />)
+
+    fireEvent.change(await screen.findByLabelText('Source'), {
+      target: { value: source.id },
+    })
+    fireEvent.change(await screen.findByLabelText('Search method'), {
+      target: { value: 'VECTOR' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Run evaluation' }))
+
+    expect(await screen.findByText('Vector search evaluation report')).toBeInTheDocument()
+    expect(runEvaluation).toHaveBeenCalledWith(source.id, 'VECTOR')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save evaluation results' }))
+    expect(downloadEvaluationReport).toHaveBeenCalledWith(
+      report,
+      source.sourceKey,
+      'VECTOR',
+    )
+  })
+
+  it('runs hybrid evaluation and labels its report correctly', async () => {
+    vi.mocked(runEvaluation).mockResolvedValue(report)
+
+    render(<EvaluationManagement />)
+
+    fireEvent.change(await screen.findByLabelText('Source'), {
+      target: { value: source.id },
+    })
+    fireEvent.change(await screen.findByLabelText('Search method'), {
+      target: { value: 'HYBRID' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Run evaluation' }))
+
+    expect(await screen.findByText('Hybrid search evaluation report')).toBeInTheDocument()
+    expect(runEvaluation).toHaveBeenCalledWith(source.id, 'HYBRID')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save evaluation results' }))
+    expect(downloadEvaluationReport).toHaveBeenCalledWith(
+      report,
+      source.sourceKey,
+      'HYBRID',
     )
   })
 
   it('shows a safe evaluation failure', async () => {
-    vi.mocked(runLexicalEvaluation).mockRejectedValue(
+    vi.mocked(runEvaluation).mockRejectedValue(
       new Error('Source has no successful ingestion run'),
     )
 
@@ -106,8 +167,9 @@ describe('EvaluationManagement', () => {
     fireEvent.change(await screen.findByLabelText('Source'), {
       target: { value: source.id },
     })
+    await screen.findByRole('option', { name: 'Lexical search' })
     fireEvent.click(
-      screen.getByRole('button', { name: 'Run lexical evaluation' }),
+      screen.getByRole('button', { name: 'Run evaluation' }),
     )
 
     expect(

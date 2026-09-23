@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { listSources, type Source } from '../sources/sourceApi'
 import {
-  runLexicalEvaluation,
-  type LexicalEvaluationReport,
+  listRetrievalMethods,
+  type RetrievalMethod,
+  type RetrievalMethodOption,
+} from '../search/searchApi'
+import {
+  runEvaluation,
+  type EvaluationReport,
 } from './evaluationApi'
 import { downloadEvaluationReport } from './evaluationDownload'
 
@@ -14,8 +19,16 @@ function percentage(value: number) {
 function EvaluationManagement() {
   const [sources, setSources] = useState<Source[] | null>(null)
   const [selectedSourceId, setSelectedSourceId] = useState('')
-  const [report, setReport] = useState<LexicalEvaluationReport | null>(null)
+  const [retrievalMethods, setRetrievalMethods] =
+    useState<RetrievalMethodOption[] | null>(null)
+  const [retrievalMethod, setRetrievalMethod] = useState<RetrievalMethod | ''>('')
+  const [result, setResult] = useState<{
+    report: EvaluationReport
+    retrievalMethod: RetrievalMethod
+    displayName: string
+  } | null>(null)
   const [sourceLoadFailed, setSourceLoadFailed] = useState(false)
+  const [retrievalMethodsFailed, setRetrievalMethodsFailed] = useState(false)
   const [evaluationError, setEvaluationError] = useState<string | null>(null)
   const [running, setRunning] = useState(false)
 
@@ -31,24 +44,43 @@ function EvaluationManagement() {
       })
   }, [])
 
+  useEffect(() => {
+    listRetrievalMethods()
+      .then((methods) => {
+        setRetrievalMethods(methods)
+        setRetrievalMethod(methods[0]?.retrievalMethod ?? '')
+      })
+      .catch(() => {
+        setRetrievalMethodsFailed(true)
+        setRetrievalMethods([])
+      })
+  }, [])
+
   async function submitEvaluation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!selectedSourceId) {
+    if (!selectedSourceId || !retrievalMethod) {
       return
     }
 
     setRunning(true)
     setEvaluationError(null)
-    setReport(null)
+    setResult(null)
 
     try {
-      setReport(await runLexicalEvaluation(selectedSourceId))
+      const report = await runEvaluation(selectedSourceId, retrievalMethod)
+      setResult({
+        report,
+        retrievalMethod,
+        displayName: retrievalMethods?.find(
+          (method) => method.retrievalMethod === retrievalMethod,
+        )?.displayName ?? retrievalMethod,
+      })
     } catch (error) {
       setEvaluationError(
         error instanceof Error
           ? error.message
-          : 'Unable to run lexical evaluation.',
+          : 'Unable to run evaluation.',
       )
     } finally {
       setRunning(false)
@@ -56,8 +88,9 @@ function EvaluationManagement() {
   }
 
   const evaluatedSource = sources?.find(
-    (source) => source.id === report?.sourceId,
+    (source) => source.id === result?.report.sourceId,
   )
+  const report = result?.report
 
   return (
     <section
@@ -69,7 +102,7 @@ function EvaluationManagement() {
         <div>
           <h2 id="evaluations-title">Evaluations</h2>
           <p className="section-description">
-            Measure lexical search against the fixed evaluation set for one
+            Measure a search method against the fixed evaluation set for one
             synchronized Source.
           </p>
         </div>
@@ -94,11 +127,42 @@ function EvaluationManagement() {
           <button
             className="primary-button"
             type="submit"
-            disabled={!selectedSourceId || running}
+            disabled={!selectedSourceId || !retrievalMethod || running}
           >
-            Run lexical evaluation
+            Run evaluation
           </button>
         </div>
+        <div className="retrieval-method-selector">
+          <label htmlFor="evaluation-retrieval-method">Search method</label>
+          <select
+            id="evaluation-retrieval-method"
+            value={retrievalMethod}
+            disabled={running || retrievalMethods === null || retrievalMethodsFailed}
+            onChange={(event) =>
+              setRetrievalMethod(event.target.value as RetrievalMethod)
+            }
+          >
+            {retrievalMethods === null ? (
+              <option value="">Loading methods…</option>
+            ) : retrievalMethods.length === 0 ? (
+              <option value="">No search methods available</option>
+            ) : (
+              retrievalMethods.map((method) => (
+                <option
+                  key={method.retrievalMethod}
+                  value={method.retrievalMethod}
+                >
+                  {method.displayName}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+        {retrievalMethodsFailed ? (
+          <p className="request-error" role="alert">
+            Unable to load search methods. Try reloading the page.
+          </p>
+        ) : null}
       </form>
 
       <div className="content-panel">
@@ -113,7 +177,7 @@ function EvaluationManagement() {
             Register and synchronize a Source before running an evaluation.
           </p>
         ) : running ? (
-          <p role="status">Running lexical evaluation…</p>
+          <p role="status">Running evaluation…</p>
         ) : evaluationError ? (
           <p className="request-error" role="alert">
             {evaluationError}
@@ -122,7 +186,7 @@ function EvaluationManagement() {
           <div className="evaluation-report">
             <div className="evaluation-report-heading">
               <div>
-                <h3>Lexical evaluation report</h3>
+                <h3>{result.displayName} evaluation report</h3>
                 <p>
                   {evaluatedSource?.name ?? 'Unknown Source'} · Evaluation set
                   v{report.evaluationSetVersion}
@@ -135,6 +199,7 @@ function EvaluationManagement() {
                   downloadEvaluationReport(
                     report,
                     evaluatedSource?.sourceKey ?? report.sourceId,
+                    result.retrievalMethod,
                   )
                 }
               >
@@ -198,7 +263,7 @@ function EvaluationManagement() {
           </div>
         ) : (
           <p className="empty-state">
-            Select one synchronized Source and run its lexical evaluation.
+            Select one synchronized Source and run its evaluation.
           </p>
         )}
       </div>

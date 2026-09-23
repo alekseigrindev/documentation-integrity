@@ -9,6 +9,33 @@ implementation trigger are demonstrated.
 
 ## High-Priority Future Capabilities
 
+### Candidate M10 — Bounded Synchronization Execution
+
+**User problem:** Starting synchronization for several Sources currently runs
+all of them immediately. Embedding or reranking work can then compete for CPU,
+memory, native-runtime threads, and database connections, making the host
+unresponsive and performance measurements non-representative.
+
+**Required behavior:** Synchronization requests enter a bounded queue when all
+worker capacity is occupied. A configurable global concurrency limit controls
+how many runs may execute, and one Source cannot have overlapping queued or
+running synchronization. Operators can distinguish queued, running, succeeded,
+and failed runs and can see bounded progress without document content appearing
+in logs. A full queue produces an explicit rejection or backpressure result
+rather than unbounded memory growth. Performance reports record the worker
+limit, embedding batch size, model runtime settings, and host resources used by
+the measurement.
+
+**Implementation trigger:** Embedding and reranking establish the actual CPU,
+memory, and latency profile of one synchronization, and concurrent Source runs
+demonstrably contend for the same host resources.
+
+**Why deferred:** M8 must first prove correct vector retrieval and obtain a
+sequential baseline; reranking must also expose its measured resource profile.
+The initial solution should be the smallest bounded in-process queue that meets
+the accepted recovery semantics. Kafka or another broker requires separate
+evidence that durable cross-process delivery is needed.
+
 ### Browser Directory Upload for Remote Ingestion
 
 **User problem:** A user accessing the web application from their own computer
@@ -50,6 +77,32 @@ without a code deployment.
 flow. A settings UI before a second measured method exists would create empty
 configuration. Managing separately deployed services would additionally require
 authentication, validation, health checks, audit history, and rollback rules.
+
+## Per-Result Retrieval Diagnostics
+
+**User problem:** When investigating hybrid retrieval behavior, an operator or
+developer cannot currently see whether a returned chunk was found by lexical
+retrieval, vector retrieval, or both, or inspect the ranking evidence used to
+place it in the final result list.
+
+**Required behavior:** An optional diagnostic representation identifies the
+retrieval methods that contributed each returned chunk and exposes ranking
+metadata with explicit semantics. It must distinguish source-specific values
+such as lexical rank, vector rank, and fusion score rather than presenting one
+ambiguous generic `score`. Retrieval-method membership is represented as a set
+because duplicates and ordering have no meaning. Normal search responses remain
+focused on cited passages unless the accepted operator workflow requires these
+diagnostics.
+
+**Implementation trigger:** Measured hybrid retrieval produces a ranking issue
+that cannot be explained from final ranks and evaluation metrics alone, or an
+accepted diagnostics UI or report requires per-result contribution evidence.
+
+**Why deferred:** M8T2 selects retrieval behavior using Recall@10, MRR@10,
+p50, and p95. Those metrics depend on final result order, not on exposing
+internal scores. Adding diagnostics now would expand the search DTO, mapper,
+frontend contract, and UI without contributing to the current acceptance
+evidence.
 
 ## Publisher Soft Deletion
 

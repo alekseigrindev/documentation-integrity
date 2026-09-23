@@ -21,12 +21,20 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.stream.IntStream;
+
 /**
  * Synchronizes all supported documents belonging to one registered source.
  */
 @Service
 @RequiredArgsConstructor
 public class SourceSynchronizationService {
+
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(SourceSynchronizationService.class);
 
     private final SourceRepository sourceRepository;
     private final IngestionRunService ingestionRunService;
@@ -45,9 +53,39 @@ public class SourceSynchronizationService {
         try (Stream<AcquiredDocument> documents = scannerFor(source).scan(source)) {
             List<AcquiredDocument> scannedDocuments = documents.toList();
 
-            List<DocumentStateResult> retainedDocumentResults = scannedDocuments.stream()
-                    .map(document -> documentImportService.importAcquiredDocument(source, document))
-                    .toList();
+            LOGGER.info(
+                    "Synchronizing Source {} containing {} documents",
+                    source.getId(),
+                    scannedDocuments.size()
+            );
+
+            List<DocumentStateResult> retainedDocumentResults =
+                    IntStream.range(0, scannedDocuments.size())
+                            .mapToObj(index -> {
+                                DocumentStateResult result =
+                                        documentImportService.importAcquiredDocument(
+                                                source,
+                                                scannedDocuments.get(index)
+                                        );
+
+                                int completedDocuments = index + 1;
+
+                                if (completedDocuments == 1
+                                        || completedDocuments % 10 == 0
+                                        || completedDocuments
+                                        == scannedDocuments.size()) {
+
+                                    LOGGER.info(
+                                            "Source {} progress: document {}/{}, outcome {}",
+                                            source.getId(),
+                                            completedDocuments,
+                                            scannedDocuments.size(),
+                                            result.outcome()
+                                    );
+                                }
+                                return result;
+                            })
+                            .toList();
 
             Set<UUID> retainedDocumentIds = retainedDocumentResults.stream()
                     .map(documentStateResult -> documentStateResult.document().getId())
@@ -58,8 +96,8 @@ public class SourceSynchronizationService {
             IngestionRunChangeCounts changeCounts = new IngestionRunChangeCounts(
                     retainedDocumentResults.stream().filter(documentStateResult -> documentStateResult.outcome() == ImportOutcome.CREATED).count(),
                     retainedDocumentResults.stream().filter(documentStateResult -> documentStateResult.outcome() == ImportOutcome.UPDATED).count(),
-                        removedDocumentCount
-                    );
+                    removedDocumentCount
+            );
 
             ingestionRunService.succeed(runId, changeCounts);
             return ingestionRunService.get(runId);

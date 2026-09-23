@@ -5,14 +5,18 @@ import io.github.alekseigrindev.documentationintegrity.ingestion.document.Docume
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentChunkRepository;
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocument;
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentationDocumentRepository;
+import io.github.alekseigrindev.documentationintegrity.ingestion.embedding.TextEmbeddingModel;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.Source;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 /**
  * Atomically writes one prepared document as the current searchable state.
@@ -23,6 +27,7 @@ public class DocumentStateWriter {
 
     private final DocumentationDocumentRepository documentRepository;
     private final DocumentChunkRepository chunkRepository;
+    private final Optional<TextEmbeddingModel> textEmbeddingModel;
 
     @Transactional
     public DocumentStateResult synchronize(
@@ -66,6 +71,11 @@ public class DocumentStateWriter {
                     acquired.mediaType(),
                     acquiredAt,
                     attribution
+            );
+
+            backfillMissingEmbeddings(
+                    document.getId(),
+                    prepared.chunks()
             );
 
             return new DocumentStateResult(
@@ -146,14 +156,38 @@ public class DocumentStateWriter {
             UUID documentId,
             List<PreparedChunk> preparedChunks
     ) {
-        return preparedChunks.stream()
-                .map(chunk -> new DocumentChunk(
-                        UUID.randomUUID(),
-                        documentId,
-                        chunk.ordinal(),
-                        chunk.content(),
-                        chunk.contentHash()
+
+        List<float[]> embeddings = textEmbeddingModel
+                .map(model -> model.embedDocuments(
+                        preparedChunks.stream()
+                                .map(PreparedChunk::content)
+                                .toList()
                 ))
+                .orElseGet(() -> Collections.nCopies(
+                        preparedChunks.size(),
+                        null
+                ));
+
+
+        if (embeddings.size() != preparedChunks.size()) {
+            throw new IllegalStateException(
+                    "Embedding count does not match chunk count"
+            );
+        }
+
+        return IntStream.range(0, preparedChunks.size())
+                .mapToObj(index -> {
+                    PreparedChunk chunk = preparedChunks.get(index);
+
+                    return new DocumentChunk(
+                            UUID.randomUUID(),
+                            documentId,
+                            chunk.ordinal(),
+                            chunk.content(),
+                            chunk.contentHash(),
+                            embeddings.get(index)
+                    );
+                })
                 .toList();
     }
 
@@ -172,5 +206,25 @@ public class DocumentStateWriter {
         }
 
         return attribution;
+    }
+
+    private void backfillMissingEmbeddings(
+            UUID documentId,
+            List<PreparedChunk> preparedChunks
+    ) {
+        if (textEmbeddingModel.isEmpty()) {
+            return;
+        }
+
+        if (!chunkRepository.existsByDocumentIdAndEmbeddingIsNull(
+                documentId
+        )) {
+            return;
+        }
+
+        chunkRepository.deleteByDocumentId(documentId);
+        chunkRepository.saveAll(
+                createChunks(documentId, preparedChunks)
+        );
     }
 }

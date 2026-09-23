@@ -4,6 +4,7 @@ import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRu
 import io.github.alekseigrindev.documentationintegrity.ingestion.run.IngestionRunStatus;
 import io.github.alekseigrindev.documentationintegrity.ingestion.search.DocumentationSearchHit;
 import io.github.alekseigrindev.documentationintegrity.ingestion.search.DocumentationSearchService;
+import io.github.alekseigrindev.documentationintegrity.ingestion.search.RetrievalMethod;
 import io.github.alekseigrindev.documentationintegrity.ingestion.source.SourceRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +29,17 @@ public class LexicalEvaluationService {
     private final DocumentationSearchService documentationSearchService;
     private final EvaluationSetLoader evaluationSetLoader;
 
-    public LexicalEvaluationReport evaluate(UUID sourceId) {
+    public LexicalEvaluationReport evaluate(UUID sourceId, RetrievalMethod retrievalMethod) {
         requireEvaluableSource(sourceId);
 
         EvaluationSet evaluationSet = evaluationSetLoader.load();
 
         List<LexicalEvaluationCaseResult> caseResults = evaluationSet.cases().stream()
-                .map(evaluationCase -> evaluateCase(sourceId, evaluationCase))
+                .map(evaluationCase -> evaluateCase(
+                        sourceId,
+                        evaluationCase,
+                        retrievalMethod
+                ))
                 .toList();
 
         return new LexicalEvaluationReport(
@@ -96,10 +101,17 @@ public class LexicalEvaluationService {
         return sortedValues.get(Math.max(index, 0));
     }
 
-    private LexicalEvaluationCaseResult evaluateCase(UUID sourceId, EvaluationCase evaluationCase) {
+    private LexicalEvaluationCaseResult evaluateCase(
+            UUID sourceId,
+            EvaluationCase evaluationCase,
+            RetrievalMethod retrievalMethod
+    ) {
         long startedAt = System.nanoTime();
 
-        List<DocumentationSearchHit> searchHits = documentationSearchService.search(evaluationCase.query(), Set.of(sourceId));
+        List<DocumentationSearchHit> searchHits = documentationSearchService.search(
+                evaluationCase.query(),
+                Set.of(sourceId),
+                retrievalMethod);
 
         long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
 

@@ -7,6 +7,10 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Runs full-text search and assembles cited results.
@@ -14,6 +18,9 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class DocumentationSearchService {
+
+    private static final int RRF_RANK_CONSTANT = 60;
+    private static final int RESULT_LIMIT = 10;
 
     private final DocumentChunkRepository documentChunkRepository;
     private final Optional<TextEmbeddingModel> textEmbeddingModel;
@@ -27,6 +34,59 @@ public class DocumentationSearchService {
                 : getByQueryAndSourceIds(query, sourceIds, retrievalMethod);
     }
 
+    private List<DocumentationSearchHit> fuseRankedResults(
+            List<DocumentationSearchHit> lexicalSearchResults,
+            List<DocumentationSearchHit> vectorSearchResults
+    ) {
+        Map<UUID, Double> lexicalScores = calculateChunksScores(lexicalSearchResults);
+        Map<UUID, Double> vectorScores = calculateChunksScores(vectorSearchResults);
+
+        final Map<UUID, Double> combinedScores = new HashMap<>(lexicalScores);
+
+        vectorScores.forEach((chunkId, score) ->
+                combinedScores.merge(
+                        chunkId,
+                        score,
+                        Double::sum
+                ));
+
+        Map<UUID, DocumentationSearchHit> hitsByChunkId =
+                Stream.concat(
+                        lexicalSearchResults.stream().limit(RESULT_LIMIT),
+                        vectorSearchResults.stream().limit(RESULT_LIMIT)
+                ).collect(Collectors.toMap(
+                        DocumentationSearchHit::chunkId,
+                        Function.identity(),
+                        (existingHit, duplicateHit) -> existingHit
+                ));
+
+        return combinedScores.entrySet().stream()
+                .sorted(
+                        Map.Entry.<UUID, Double>comparingByValue()
+                                .reversed()
+                                .thenComparing(Map.Entry.comparingByKey())
+                )
+                .limit(RESULT_LIMIT)
+                .map(entry -> hitsByChunkId.get(entry.getKey()))
+                .toList();
+    }
+
+    private Map<UUID, Double> calculateChunksScores(List<DocumentationSearchHit> rawHits) {
+        int resultCount = Math.min(rawHits.size(), RESULT_LIMIT);
+
+        return IntStream.range(0, resultCount)
+                .boxed()
+                .collect(Collectors.toMap(
+                        index -> rawHits.get(index).chunkId(),
+                        index -> {
+                            int rank = index + 1;
+                            return 1.0 / (RRF_RANK_CONSTANT + rank);
+                        },
+                        Double::sum
+                ));
+
+    }
+
     private List<DocumentationSearchHit> getByQuery(
             String query,
             RetrievalMethod retrievalMethod
@@ -34,6 +94,10 @@ public class DocumentationSearchService {
         return switch (retrievalMethod) {
             case LEXICAL -> lexicalSearchByQuery(query);
             case VECTOR -> vectorSearchByQuery(query);
+            case HYBRID -> fuseRankedResults(
+                    vectorSearchByQuery(query),
+                    lexicalSearchByQuery(query)
+            );
         };
     }
 
@@ -61,6 +125,10 @@ public class DocumentationSearchService {
         return switch (retrievalMethod) {
             case LEXICAL -> lexicalSearchByQueryAndSourceIds(query, sourceIds);
             case VECTOR -> vectorSearchByQueryAndSourceIds(query, sourceIds);
+            case HYBRID -> fuseRankedResults(
+                    vectorSearchByQueryAndSourceIds(query, sourceIds),
+                    lexicalSearchByQueryAndSourceIds(query, sourceIds)
+            );
         };
     }
 
@@ -127,7 +195,11 @@ public class DocumentationSearchService {
 
     public List<RetrievalMethod> getRetrievalMethods() {
         return textEmbeddingModel.isPresent()
-                ? List.of(RetrievalMethod.LEXICAL, RetrievalMethod.VECTOR)
+                ? List.of(
+                        RetrievalMethod.LEXICAL,
+                        RetrievalMethod.VECTOR,
+                        RetrievalMethod.HYBRID
+                        )
                 : List.of(RetrievalMethod.LEXICAL);
     }
 }

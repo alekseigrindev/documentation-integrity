@@ -27,14 +27,14 @@ and keeps the best method only when the measurements justify it.
 
 | Task | Plain outcome | Status |
 | --- | --- | --- |
-| M8.0 Milestone definition | The team agrees the M8 retrieval methods, quality gate, delivery tasks, runtime constraints, and boundaries before implementation begins. | In progress |
-| M8.1 Embedding-backed vector retrieval | Synchronization creates current embeddings, and a user can run cited vector search over synchronized Sources. | Planned |
-| M8.2 Measured hybrid retrieval selection | A user can choose lexical, vector, or hybrid search, and an operator compares them on the versioned evaluation set. | Planned |
+| M8.0 Milestone definition | The team agrees the M8 retrieval methods, quality gate, delivery tasks, runtime constraints, and boundaries before implementation begins. | Completed |
+| M8.1 Embedding-backed vector retrieval | Synchronization creates current embeddings, and a user can run cited vector search over synchronized Sources. | Completed 2026-09-22 |
+| M8.2 Measured hybrid retrieval selection | A user can choose lexical, vector, or hybrid search, and an operator compares them on the versioned evaluation set. | In progress |
 | M8.3 Milestone finalization | The M8 retrieval story works after small fixes and usability improvements discovered during delivery. | Planned |
 
 ## Active Task
 
-**M8T0 — Milestone definition**
+**M8T2 — Measured hybrid retrieval selection**
 
 ### M8T0 — Milestone definition
 
@@ -65,6 +65,15 @@ application boundary and store vectors in PostgreSQL with pgvector. Keep the
 existing Source filter and citation contract. Do not add hybrid fusion,
 reranking, chat, gRPC, a physical retrieval service, or evaluation history.
 Downloaded model artifacts and derived embeddings are not committed to Git.
+
+**M8T1 evidence:** A local synchronization stored embeddings for all 11,069
+current chunks; an unchanged repeat left the same counts. Vector search in the
+browser returned cited passages with a selected Source. A controlled document
+replacement removed the old searchable chunk and exposed the new one. On the
+same unchanged corpus and 12-case evaluation set, vector found the expected
+document in 12/12 cases (Recall@10 1.00, MRR@10 0.581) versus lexical 3/12
+(Recall@10 0.25, MRR@10 0.139). This is preliminary evidence, not the M8
+30-case quality gate or a decision to change the default.
 
 ### M8T2 — Measured hybrid retrieval selection
 

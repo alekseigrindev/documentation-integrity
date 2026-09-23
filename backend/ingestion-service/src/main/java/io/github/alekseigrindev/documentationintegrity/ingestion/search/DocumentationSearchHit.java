@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Internal full-text match with the provenance required for citation.
+ * Internal full-text match with the provenance required for a citation.
  */
 public record DocumentationSearchHit(
         UUID chunkId,

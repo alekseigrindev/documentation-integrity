@@ -36,3 +36,10 @@ documentation-integrity:
     tokenizer-path: ${DOCUMENTATION_EMBEDDING_TOKENIZER_PATH:}
     max-tokens: ${DOCUMENTATION_EMBEDDING_MAX_TOKENS:512}
     batch-size: ${DOCUMENTATION_EMBEDDING_BATCH_SIZE:1}
+
+  reranker:
+    enabled: ${DOCUMENTATION_RERANKER_ENABLED:false}
+    model-path: ${DOCUMENTATION_RERANKER_MODEL_PATH:}
+    tokenizer-path: ${DOCUMENTATION_RERANKER_TOKENIZER_PATH:}
+    max-tokens: ${DOCUMENTATION_RERANKER_MAX_TOKENS:}
+    batch-size: ${DOCUMENTATION_RERANKER_BATCH_SIZE:}

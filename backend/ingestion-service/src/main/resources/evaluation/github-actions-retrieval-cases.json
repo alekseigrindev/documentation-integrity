@@ -1,5 +1,5 @@
 {
-  "evaluationSetVersion": 1,
+  "evaluationSetVersion": 2,
   "corpus": {
     "repository": "https://github.com/github/docs",
     "commit": "062800c32b5d12ccae18d1a4a542e94069d827f8",
@@ -9,85 +9,129 @@
     {
       "id": "github-token-recursion-prevention",
       "query": "Why did adding a label with GITHUB_TOKEN not trigger another workflow?",
-      "expectedSourceLocators": [
-        "how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow.md",
+          "chunkContentHash": "680010dc674aa0b64467bbedbdf6b2f6c53475bb8406d985169b9a681e32853e"
+        }
       ]
     },
     {
       "id": "github-token-default-permissions",
       "query": "How do I control the permissions granted to GITHUB_TOKEN in a workflow?",
-      "expectedSourceLocators": [
-        "reference/workflows-and-actions/workflow-syntax.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "reference/workflows-and-actions/workflow-syntax.md",
+          "chunkContentHash": "6b1766dc608f09b14ebe3ab9c224b9d04c3d6856d193a9bdbb123990717b2e3f"
+        }
       ]
     },
     {
       "id": "reusable-workflow-secrets",
       "query": "How do I pass secrets to a reusable workflow?",
-      "expectedSourceLocators": [
-        "how-tos/reuse-automations/reuse-workflows.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "how-tos/reuse-automations/reuse-workflows.md",
+          "chunkContentHash": "8b233bc5cba3a156be2464122add0262e50a529000a76883af58f5878ab7cc0d"
+        }
       ]
     },
     {
       "id": "environment-secrets",
       "query": "When can a job access secrets from a deployment environment?",
-      "expectedSourceLocators": [
-        "concepts/workflows-and-actions/deployment-environments.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "concepts/workflows-and-actions/deployment-environments.md",
+          "chunkContentHash": "419ccef79ce34fda9b2b69df0f7b6d29ad318de61182e577e18217a2cfca3d42"
+        }
       ]
     },
     {
       "id": "oidc-short-lived-credentials",
       "query": "How can a workflow get short-lived cloud credentials without storing cloud secrets in GitHub?",
-      "expectedSourceLocators": [
-        "concepts/security/openid-connect.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "concepts/security/openid-connect.md",
+          "chunkContentHash": "11abeb211659a7ad5ba537e5d72828c21a904b950218db61efd3515e24018a6a"
+        }
       ]
     },
     {
       "id": "concurrent-workflow-runs",
       "query": "How do I prevent multiple deployment workflow runs from executing at the same time?",
-      "expectedSourceLocators": [
-        "concepts/workflows-and-actions/concurrency.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "concepts/workflows-and-actions/concurrency.md",
+          "chunkContentHash": "c100bee5a59a6c502cfbbad5f5699c09010b95c471a1be4bc4cfdd654c57563e"
+        }
       ]
     },
     {
       "id": "self-hosted-runner",
       "query": "What is a self-hosted runner in GitHub Actions?",
-      "expectedSourceLocators": [
-        "concepts/runners/self-hosted-runners.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "concepts/runners/self-hosted-runners.md",
+          "chunkContentHash": "3d1bf0371de37b154164fd3e717bba31189b03131123409aa7fbff817ff11fcd"
+        }
       ]
     },
     {
       "id": "manage-dependency-caches",
       "query": "How can I view or delete dependency caches created by my workflows?",
-      "expectedSourceLocators": [
-        "how-tos/manage-workflow-runs/manage-caches.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "how-tos/manage-workflow-runs/manage-caches.md",
+          "chunkContentHash": "8e15f3fa144f3ec807d1dcd632d867aa55ce762bb356861d18a5f47aa7e89904"
+        },
+        {
+          "sourceLocator": "how-tos/manage-workflow-runs/manage-caches.md",
+          "chunkContentHash": "0f708f42b7b9e09288991030ca31330d8270bc0432755f682846e439566e1b92"
+        }
       ]
     },
     {
       "id": "workflow-expressions",
       "query": "How do expressions work in GitHub Actions workflows?",
-      "expectedSourceLocators": [
-        "concepts/workflows-and-actions/expressions.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "concepts/workflows-and-actions/expressions.md",
+          "chunkContentHash": "5b5c30db7a14b252ee2456995430af64005ba681fa4183174171b27facc7a913"
+        }
       ]
     },
     {
       "id": "workflow-permissions-syntax",
       "query": "Where do I define workflow permissions in GitHub Actions YAML?",
-      "expectedSourceLocators": [
-        "reference/workflows-and-actions/workflow-syntax.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "reference/workflows-and-actions/workflow-syntax.md",
+          "chunkContentHash": "6b1766dc608f09b14ebe3ab9c224b9d04c3d6856d193a9bdbb123990717b2e3f"
+        }
       ]
     },
     {
       "id": "workflow-contexts",
       "query": "Which contexts can I use in a GitHub Actions workflow?",
-      "expectedSourceLocators": [
-        "reference/workflows-and-actions/contexts.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "reference/workflows-and-actions/contexts.md",
+          "chunkContentHash": "a6bf05a6fb7b9620b5902d8688707021ff48828c699289b16de74071748514ea"
+        }
       ]
     },
     {
       "id": "manual-workflow-run",
       "query": "How can I run a GitHub Actions workflow manually?",
-      "expectedSourceLocators": [
-        "how-tos/manage-workflow-runs/manually-run-a-workflow.md"
+      "expectedPassages": [
+        {
+          "sourceLocator": "how-tos/manage-workflow-runs/manually-run-a-workflow.md",
+          "chunkContentHash": "20e34e21fcbb73d6281c9166137ca084b84edb18e3ae25f9cace512005705629"
+        },
+        {
+          "sourceLocator": "how-tos/manage-workflow-runs/manually-run-a-workflow.md",
+          "chunkContentHash": "149a69ba5b5b3e195867bdc062788b7afcc47c5502e2d6c2213cf3f861933cb4"
+        }
       ]
     }
   ]

@@ -29,15 +29,17 @@ cost.
 
 | Task | Plain outcome | Status |
 | --- | --- | --- |
-| M9.0 Milestone definition | The team defines passage-level relevance evidence, reranking metrics, candidate retrieval, runtime limits, and delivery boundaries before implementation. | Ready to commit |
-| M9.1 Passage-level retrieval evaluation | The operator evaluates exact reviewed passages rather than treating every chunk from the expected document as relevant. | Planned |
-| M9.2 Reranker integration | A user selects reranked retrieval and receives reordered cited passages through the existing search flow. | Planned |
+| M9.0 Milestone definition | The team defines passage-level relevance evidence, reranking metrics, candidate retrieval, runtime limits, and delivery boundaries before implementation. | Completed 2026-09-23 |
+| M9.1 Passage-level retrieval evaluation | The operator evaluates exact reviewed passages rather than treating every chunk from the expected document as relevant. | Completed 2026-09-24 |
+| M9.2 Reranker integration | A user selects reranked retrieval and receives reordered cited passages through the existing search flow. | In progress |
 | M9.3 Measured reranker selection | The operator compares the working reranker with the strongest baseline and accepts or rejects it using the frozen gate. | Planned |
 | M9.4 Milestone finalization | The M9 evaluation and reranking story works after small corrections discovered during delivery. | Planned |
 
 ## Active Task
 
-**M9T0 — Milestone definition**
+**M9T2 — Reranker integration**
+
+### M9T0 — Milestone definition
 
 **Proposed branch:** `feature/m9t0-milestone-definition`
 
@@ -58,33 +60,33 @@ the reranker.
 
 **Proposed branch:** `feature/m9t1-passage-level-retrieval-evaluation`
 
-**User and operator scenario:** An operator reviews at least 30 realistic
-GitHub Actions questions and marks the exact passages that directly answer or
-support each question. The operator runs lexical, vector, and hybrid retrieval
-against the same pinned corpus and receives a report that measures returned
-passages rather than accepting any chunk from the correct document.
+**User and operator scenario:** An operator records the exact passages expected
+to answer each question in the existing 12-case evaluation set. The evaluator
+matches returned passages by locator and content hash rather than accepting any
+chunk from the expected document.
 
-**What proves it is done:** Evaluation-set version 2 contains at least 30
-reviewed cases. Every relevant passage is identified by `sourceLocator` and the
-backend-produced `chunkContentHash`, with relevance `2` for a direct answer and
-`1` for useful supporting context. A controlled check proves that a different
-chunk from the same document is not counted as relevant. The report gives
-HitRate@10, Precision@10, reviewed Recall@10, MRR@10, nDCG@10, and p50/p95
-latency for lexical, vector, and hybrid retrieval. A small hand-calculated
-fixture proves the metric formulas.
+**What proves it is done:** Evaluation-set version 2 contains the existing 12
+reviewed cases and 14 expected passages. Every expected passage is identified
+by `sourceLocator` and the backend-produced `chunkContentHash`. The evaluation
+records and report calculate passage-level HitRate@10, Precision@10, reviewed
+Recall@10, MRR@10, and p50/p95 latency. The backend compiles, the JSON structure
+is valid, and all 14 locator/hash pairs resolve to current stored chunks.
 
 **Evaluation rules:** The pinned corpus revision and evaluation-set version are
-recorded with the judgments. Relevant passages are reviewed from a pooled set
-of candidates returned by the baseline methods; unreviewed passages are not
-silently claimed to be irrelevant. `Recall@10` is explicitly limited to the
-reviewed relevant-passage pool. Runtime database UUIDs are not stored as
+recorded with the expected passages. Each query maps to one or more manually
+reviewed expected chunks; a returned chunk is relevant only when its locator
+and content hash match that set. `Recall@10` is explicitly limited to this
+reviewed expected-passage set. Runtime database UUIDs are not stored as
 evaluation identities. When corpus rendering or chunking changes, affected
-hashes are reviewed and the evaluation-set version is incremented.
+hashes are reviewed and the evaluation-set version is incremented. Graded
+relevance is deferred until a demonstrated evaluation need requires it.
 
 **Boundaries:** Generalize the existing evaluation records, service, API,
 downloaded report, and frontend display only as required by the corrected
-metrics. Do not download or execute a reranker, persist reports in the
-database, add evaluation history, or create a separate evaluation service.
+metrics. Expanding the set to 30 cases, adding nDCG@10 and the controlled
+comparative reranker report continue only after the reranker exists. Do not
+persist reports in the database, add evaluation history, or create a separate
+evaluation service.
 
 ### M9T2 — Reranker integration
 

@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,43 +51,73 @@ public class LexicalEvaluationService {
 
     }
 
-    private LexicalEvaluationSummary summarize(List<LexicalEvaluationCaseResult> caseResults) {
+    private LexicalEvaluationSummary summarize(
+            List<LexicalEvaluationCaseResult> caseResults
+    ) {
         int totalCases = caseResults.size();
 
         if (totalCases == 0) {
-            return new LexicalEvaluationSummary(0, 0, 0, 0 , 0, 0);
+            return new LexicalEvaluationSummary(
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+            );
         }
 
         int casesFoundAtTen = Math.toIntExact(
                 caseResults.stream()
-                        .filter(result -> result.firstMatchingRank() != null)
+                        .filter(result ->
+                                result.firstMatchingRank() != null
+                        )
                         .count()
-                );
+        );
 
-        double recallAtTen = (double) casesFoundAtTen / totalCases;
+        double hitRateAtTen =
+                (double) casesFoundAtTen / totalCases;
+
+        double meanPrecisionAtTen = caseResults.stream()
+                .mapToDouble(
+                        LexicalEvaluationCaseResult::precisionAtTen
+                )
+                .average()
+                .orElse(0);
+
+        double meanRecallAtTen = caseResults.stream()
+                .mapToDouble(
+                        LexicalEvaluationCaseResult::recallAtTen
+                )
+                .average()
+                .orElse(0);
 
         double mrrAtTen = caseResults.stream()
                 .mapToDouble(result ->
                         result.firstMatchingRank() == null
                                 ? 0
-                                : 1.0 / result.firstMatchingRank())
+                                : 1.0 / result.firstMatchingRank()
+                )
                 .average()
                 .orElse(0);
 
         List<Long> sortedDurations = caseResults.stream()
                 .map(LexicalEvaluationCaseResult::durationMs)
                 .sorted()
-                .collect(Collectors.toList());
+                .toList();
 
         return new LexicalEvaluationSummary(
                 totalCases,
                 casesFoundAtTen,
-                recallAtTen,
+                hitRateAtTen,
+                meanPrecisionAtTen,
+                meanRecallAtTen,
                 mrrAtTen,
                 percentile(sortedDurations, 0.50),
                 percentile(sortedDurations, 0.95)
         );
-
     }
 
     private long percentile(
@@ -115,31 +145,72 @@ public class LexicalEvaluationService {
 
         long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
 
+        List<Integer> rankedRelevances = searchHits.stream()
+                .limit(RESULT_LIMIT)
+                .map(hit -> relevanceOf(
+                        hit,
+                        evaluationCase.expectedPassages()
+                ))
+                .toList();
+
+        int relevantPassagesAtTen = Math.toIntExact(
+                rankedRelevances.stream()
+                        .filter(relevance -> relevance == 1)
+                        .count()
+        );
+
+        if (evaluationCase.expectedPassages().isEmpty()) {
+            throw new IllegalStateException(
+                    "Evaluation case '%s' has no expected passages"
+                            .formatted(evaluationCase.id())
+            );
+        }
+
+        double precisionAtTen =
+                (double) relevantPassagesAtTen / RESULT_LIMIT;
+
+        double recallAtTen =
+                (double) relevantPassagesAtTen
+                        / evaluationCase.expectedPassages().size();
+
+
         return new LexicalEvaluationCaseResult(
                 evaluationCase.id(),
                 evaluationCase.query(),
-                evaluationCase.expectedSourceLocators(),
-                firstMatchingRank(
-                        searchHits,
-                        evaluationCase.expectedSourceLocators()
-                ),
+                evaluationCase.expectedPassages(),
+                relevantPassagesAtTen,
+                precisionAtTen,
+                recallAtTen,
+                firstMatchingRank(rankedRelevances),
                 durationMs
         );
+    }
 
+    private int relevanceOf(
+            DocumentationSearchHit hit,
+            List<ExpectedPassage> expectedPassages
+    ) {
+        boolean expected = expectedPassages.stream()
+                .anyMatch(expectedPassage ->
+                        Objects.equals(
+                                expectedPassage.sourceLocator(),
+                                hit.sourceLocator()
+                        )
+                        && Objects.equals(
+                                expectedPassage.chunkContentHash(),
+                                hit.chunkContentHash()
+                        )
+                );
 
+        return expected ? 1 : 0;
     }
 
     private Integer firstMatchingRank(
-            List<DocumentationSearchHit> searchHits,
-            List<String> expectedSourceLocators
+            List<Integer> rankedRelevances
     ) {
-        int resultCount = Math.min(searchHits.size(), RESULT_LIMIT);
-
-        for (int i = 0; i < resultCount; i++) {
-            if (expectedSourceLocators.contains(
-                    searchHits.get(i).sourceLocator()
-            )) {
-                return i + 1;
+        for (int index = 0; index < rankedRelevances.size(); index++) {
+            if (rankedRelevances.get(index) == 1) {
+                return index + 1;
             }
         }
 

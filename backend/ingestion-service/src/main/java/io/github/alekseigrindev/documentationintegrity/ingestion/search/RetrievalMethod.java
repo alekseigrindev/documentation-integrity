@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum RetrievalMethod {
     LEXICAL("Lexical search"),
     VECTOR("Vector search"),
-    HYBRID("Hybrid search");
+    HYBRID("Hybrid search"),
+    HYBRID_RERANKED("Hybrid search + reranking");
 
     private final String displayName;
 

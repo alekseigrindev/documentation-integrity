@@ -2,6 +2,8 @@ package io.github.alekseigrindev.documentationintegrity.ingestion.search;
 
 import io.github.alekseigrindev.documentationintegrity.ingestion.document.DocumentChunkRepository;
 import io.github.alekseigrindev.documentationintegrity.ingestion.embedding.TextEmbeddingModel;
+import io.github.alekseigrindev.documentationintegrity.ingestion.reranking.TextRerankingModel;
+import io.github.alekseigrindev.documentationintegrity.ingestion.reranking.RerankingInput;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +22,12 @@ import java.util.stream.Stream;
 public class DocumentationSearchService {
 
     private static final int RRF_RANK_CONSTANT = 60;
-    private static final int RESULT_LIMIT = 10;
 
     private final DocumentChunkRepository documentChunkRepository;
     private final Optional<TextEmbeddingModel> textEmbeddingModel;
+    private final Optional<TextRerankingModel> textRerankingModel;
+
+    private final RetrievalProperties retrievalProperties;
 
     public List<DocumentationSearchHit> search(
             String query,
@@ -36,7 +40,8 @@ public class DocumentationSearchService {
 
     private List<DocumentationSearchHit> fuseRankedResults(
             List<DocumentationSearchHit> lexicalSearchResults,
-            List<DocumentationSearchHit> vectorSearchResults
+            List<DocumentationSearchHit> vectorSearchResults,
+            int outputLimit
     ) {
         Map<UUID, Double> lexicalScores = calculateChunksScores(lexicalSearchResults);
         Map<UUID, Double> vectorScores = calculateChunksScores(vectorSearchResults);
@@ -52,8 +57,8 @@ public class DocumentationSearchService {
 
         Map<UUID, DocumentationSearchHit> hitsByChunkId =
                 Stream.concat(
-                        lexicalSearchResults.stream().limit(RESULT_LIMIT),
-                        vectorSearchResults.stream().limit(RESULT_LIMIT)
+                        lexicalSearchResults.stream().limit(retrievalProperties.lexicalCandidateLimit()),
+                        vectorSearchResults.stream().limit(retrievalProperties.vectorCandidateLimit())
                 ).collect(Collectors.toMap(
                         DocumentationSearchHit::chunkId,
                         Function.identity(),
@@ -66,15 +71,14 @@ public class DocumentationSearchService {
                                 .reversed()
                                 .thenComparing(Map.Entry.comparingByKey())
                 )
-                .limit(RESULT_LIMIT)
+                .limit(outputLimit)
                 .map(entry -> hitsByChunkId.get(entry.getKey()))
                 .toList();
     }
 
     private Map<UUID, Double> calculateChunksScores(List<DocumentationSearchHit> rawHits) {
-        int resultCount = Math.min(rawHits.size(), RESULT_LIMIT);
 
-        return IntStream.range(0, resultCount)
+        return IntStream.range(0, rawHits.size())
                 .boxed()
                 .collect(Collectors.toMap(
                         index -> rawHits.get(index).chunkId(),
@@ -95,25 +99,37 @@ public class DocumentationSearchService {
             case LEXICAL -> lexicalSearchByQuery(query);
             case VECTOR -> vectorSearchByQuery(query);
             case HYBRID -> fuseRankedResults(
+                    lexicalSearchByQuery(query),
                     vectorSearchByQuery(query),
-                    lexicalSearchByQuery(query)
+                    10
+            );
+            case HYBRID_RERANKED -> rerank(
+                    query,
+                    fuseRankedResults(
+                            lexicalSearchByQuery(query),
+                            vectorSearchByQuery(query),
+                            retrievalProperties.rerankingCandidateLimit()
+                    )
             );
         };
     }
 
-    private List<DocumentationSearchHit> vectorSearchByQuery(String query) {
+    private List<DocumentationSearchHit> vectorSearchByQuery(
+            String query
+    ) {
         float[] queryEmbedding = embedQuery(query);
 
         return toSearchHits(
                 documentChunkRepository.searchCitableChunksByEmbedding(
-                        queryEmbedding
+                        queryEmbedding,
+                        retrievalProperties.vectorCandidateLimit()
                 )
         );
     }
 
     private List<DocumentationSearchHit> lexicalSearchByQuery(String query) {
         return toSearchHits(
-                documentChunkRepository.searchCitableChunksByQuery(query)
+                documentChunkRepository.searchCitableChunksByQuery(query, retrievalProperties.lexicalCandidateLimit())
         );
     }
 
@@ -126,8 +142,17 @@ public class DocumentationSearchService {
             case LEXICAL -> lexicalSearchByQueryAndSourceIds(query, sourceIds);
             case VECTOR -> vectorSearchByQueryAndSourceIds(query, sourceIds);
             case HYBRID -> fuseRankedResults(
+                    lexicalSearchByQueryAndSourceIds(query, sourceIds),
                     vectorSearchByQueryAndSourceIds(query, sourceIds),
-                    lexicalSearchByQueryAndSourceIds(query, sourceIds)
+                    10
+            );
+            case HYBRID_RERANKED -> rerank(
+                    query,
+                    fuseRankedResults(
+                            lexicalSearchByQueryAndSourceIds(query, sourceIds),
+                            vectorSearchByQueryAndSourceIds(query, sourceIds),
+                            retrievalProperties.rerankingCandidateLimit()
+                    )
             );
         };
     }
@@ -142,7 +167,8 @@ public class DocumentationSearchService {
                 documentChunkRepository
                         .searchCitableChunksByEmbeddingAndSourceIds(
                                 queryEmbedding,
-                                sourceIds
+                                sourceIds,
+                                retrievalProperties.vectorCandidateLimit()
                         )
         );
     }
@@ -155,7 +181,8 @@ public class DocumentationSearchService {
                 documentChunkRepository
                         .searchCitableChunksByQueryAndSourceIds(
                                 query,
-                                sourceIds
+                                sourceIds,
+                                retrievalProperties.lexicalCandidateLimit()
                         )
         );
     }
@@ -194,12 +221,58 @@ public class DocumentationSearchService {
     }
 
     public List<RetrievalMethod> getRetrievalMethods() {
-        return textEmbeddingModel.isPresent()
-                ? List.of(
-                        RetrievalMethod.LEXICAL,
-                        RetrievalMethod.VECTOR,
-                        RetrievalMethod.HYBRID
-                        )
-                : List.of(RetrievalMethod.LEXICAL);
+        List<RetrievalMethod> methods = new ArrayList<>();
+        methods.add(RetrievalMethod.LEXICAL);
+
+        if (textEmbeddingModel.isPresent()) {
+            methods.add(RetrievalMethod.VECTOR);
+            methods.add(RetrievalMethod.HYBRID);
+
+            if (textRerankingModel.isPresent()) {
+                methods.add(RetrievalMethod.HYBRID_RERANKED);
+            }
+        }
+
+        return methods;
+    }
+
+    private List<DocumentationSearchHit> rerank(
+            String query,
+            List<DocumentationSearchHit> candidates
+    ) {
+        TextRerankingModel model = textRerankingModel.orElseThrow(
+                () -> new IllegalStateException(
+                        "Reranking is unavailable because the model is disabled"
+                )
+        );
+
+        if (candidates.isEmpty()) {
+            return List.of();
+        }
+
+        List<RerankingInput> inputs = candidates.stream()
+                .map(hit -> new RerankingInput(query, hit.content()))
+                .toList();
+
+        float[] scores = model.score(inputs);
+
+        if (scores.length != candidates.size()) {
+            throw new IllegalStateException(
+                    "Reranker score count does not match candidate count"
+            );
+        }
+
+        return IntStream.range(0, candidates.size())
+                .boxed()
+                .sorted(
+                        Comparator.comparingDouble(
+                                        (Integer index) -> scores[index]
+                                ).reversed()
+                                .thenComparingInt(Integer::intValue)
+                )
+                .limit(retrievalProperties.rerankingResultLimit())
+                .map(candidates::get)
+                .toList();
+
     }
 }

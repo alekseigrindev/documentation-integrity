@@ -7,6 +7,7 @@ public record LexicalEvaluationSummary(
         double meanPrecisionAtTen,
         double meanRecallAtTen,
         double mrrAtTen,
+        double meanNdcgAtTen,
         long p50LatencyMs,
         long p95LatencyMs
 ) {

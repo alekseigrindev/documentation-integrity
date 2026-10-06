@@ -9,13 +9,23 @@ describe('runEvaluation', () => {
   it('sends the selected retrieval method and Source to the backend', async () => {
     const report = {
       sourceId: 'source-a',
-      evaluationSetVersion: 1,
+      evaluationSetVersion: 2,
+      retrievalMethod: 'VECTOR',
+      retrievalConfiguration: {
+        lexicalCandidateLimit: 50,
+        vectorCandidateLimit: 50,
+        rerankingCandidateLimit: 50,
+        rerankingResultLimit: 10,
+      },
       caseResults: [],
       summary: {
         totalCases: 0,
         casesFoundAtTen: 0,
-        recallAtTen: 0,
+        hitRateAtTen: 0,
+        meanPrecisionAtTen: 0,
+        meanRecallAtTen: 0,
         mrrAtTen: 0,
+        meanNdcgAtTen: 0,
         p50LatencyMs: 0,
         p95LatencyMs: 0,
       },

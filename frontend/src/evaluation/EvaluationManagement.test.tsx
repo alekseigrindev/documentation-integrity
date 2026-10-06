@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { listSources } from '../sources/sourceApi'
 import { listRetrievalMethods } from '../search/searchApi'
 import EvaluationManagement from './EvaluationManagement'
-import { runEvaluation } from './evaluationApi'
+import { runEvaluation, type EvaluationReport } from './evaluationApi'
 import { downloadEvaluationReport } from './evaluationDownload'
 
 vi.mock('../sources/sourceApi', () => ({
@@ -30,25 +30,46 @@ const source = {
   name: 'GitHub Docs',
 }
 
-const report = {
+const report: EvaluationReport = {
   sourceId: source.id,
-  evaluationSetVersion: 1,
+  evaluationSetVersion: 2,
+  retrievalMethod: 'LEXICAL',
+  retrievalConfiguration: {
+    lexicalCandidateLimit: 50,
+    vectorCandidateLimit: 50,
+    rerankingCandidateLimit: 50,
+    rerankingResultLimit: 10,
+  },
   caseResults: [
     {
       caseId: 'workflow-permissions-syntax',
       query: 'Where do I define workflow permissions?',
-      expectedSourceLocators: [
-        'content/actions/reference/workflows-and-actions/workflow-syntax.md',
+      expectedPassages: [
+        {
+          sourceLocator: 'reference/workflows-and-actions/workflow-syntax.md',
+          chunkContentHash: 'permissions-passage-hash',
+        },
       ],
+      relevantPassagesAtTen: 1,
+      precisionAtTen: 0.1,
+      recallAtTen: 1,
+      ndcgAtTen: 1 / Math.log2(3),
       firstMatchingRank: 2,
       durationMs: 14,
     },
     {
       caseId: 'manual-workflow-run',
       query: 'How can I run a workflow manually?',
-      expectedSourceLocators: [
-        'content/actions/how-tos/manage-workflow-runs/manually-run-a-workflow.md',
+      expectedPassages: [
+        {
+          sourceLocator: 'how-tos/manage-workflow-runs/manually-run-a-workflow.md',
+          chunkContentHash: 'manual-run-passage-hash',
+        },
       ],
+      relevantPassagesAtTen: 0,
+      precisionAtTen: 0,
+      recallAtTen: 0,
+      ndcgAtTen: 0,
       firstMatchingRank: null,
       durationMs: 18,
     },
@@ -56,8 +77,11 @@ const report = {
   summary: {
     totalCases: 2,
     casesFoundAtTen: 1,
-    recallAtTen: 0.5,
+    hitRateAtTen: 0.5,
+    meanPrecisionAtTen: 0.05,
+    meanRecallAtTen: 0.5,
     mrrAtTen: 0.25,
+    meanNdcgAtTen: 1 / Math.log2(3) / 2,
     p50LatencyMs: 14,
     p95LatencyMs: 18,
   },
@@ -93,8 +117,11 @@ describe('EvaluationManagement', () => {
     expect(await screen.findByText('Lexical search evaluation report')).toBeInTheDocument()
     expect(runEvaluation).toHaveBeenCalledWith(source.id, 'LEXICAL')
     expect(screen.getByText('1 / 2')).toBeInTheDocument()
-    expect(screen.getByText('50.0%')).toBeInTheDocument()
+    expect(screen.getAllByText('50.0%')).toHaveLength(2)
     expect(screen.getByText('0.250')).toBeInTheDocument()
+    expect(screen.getByText('nDCG@10')).toBeInTheDocument()
+    expect(screen.getByText('0.315')).toBeInTheDocument()
+    expect(screen.getByText('permissions-passage-hash')).toBeInTheDocument()
     expect(screen.getByText('Found at rank 2')).toBeInTheDocument()
     expect(screen.getByText('Not found in top 10')).toBeInTheDocument()
 
@@ -105,12 +132,12 @@ describe('EvaluationManagement', () => {
     expect(downloadEvaluationReport).toHaveBeenCalledWith(
       report,
       source.sourceKey,
-      'LEXICAL',
     )
   })
 
   it('runs vector evaluation and labels its report correctly', async () => {
-    vi.mocked(runEvaluation).mockResolvedValue(report)
+    const vectorReport: EvaluationReport = { ...report, retrievalMethod: 'VECTOR' }
+    vi.mocked(runEvaluation).mockResolvedValue(vectorReport)
 
     render(<EvaluationManagement />)
 
@@ -127,14 +154,14 @@ describe('EvaluationManagement', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save evaluation results' }))
     expect(downloadEvaluationReport).toHaveBeenCalledWith(
-      report,
+      vectorReport,
       source.sourceKey,
-      'VECTOR',
     )
   })
 
   it('runs hybrid evaluation and labels its report correctly', async () => {
-    vi.mocked(runEvaluation).mockResolvedValue(report)
+    const hybridReport: EvaluationReport = { ...report, retrievalMethod: 'HYBRID' }
+    vi.mocked(runEvaluation).mockResolvedValue(hybridReport)
 
     render(<EvaluationManagement />)
 
@@ -151,9 +178,8 @@ describe('EvaluationManagement', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save evaluation results' }))
     expect(downloadEvaluationReport).toHaveBeenCalledWith(
-      report,
+      hybridReport,
       source.sourceKey,
-      'HYBRID',
     )
   })
 

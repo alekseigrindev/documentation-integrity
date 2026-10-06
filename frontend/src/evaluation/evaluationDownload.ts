@@ -1,4 +1,3 @@
-import type { RetrievalMethod } from '../search/searchApi'
 import type { EvaluationReport } from './evaluationApi'
 
 function safeFilePart(value: string) {
@@ -11,17 +10,15 @@ function safeFilePart(value: string) {
 
 export function serializeEvaluationReport(
   report: EvaluationReport,
-  retrievalMethod: RetrievalMethod,
 ) {
-  return JSON.stringify({ ...report, retrievalMethod }, null, 2)
+  return JSON.stringify(report, null, 2)
 }
 
 export function downloadEvaluationReport(
   report: EvaluationReport,
   sourceKey: string,
-  retrievalMethod: RetrievalMethod,
 ) {
-  const blob = new Blob([serializeEvaluationReport(report, retrievalMethod)], {
+  const blob = new Blob([serializeEvaluationReport(report)], {
     type: 'application/json',
   })
   const downloadUrl = URL.createObjectURL(blob)
@@ -30,7 +27,7 @@ export function downloadEvaluationReport(
 
   anchor.href = downloadUrl
   anchor.download =
-    `${retrievalMethod.toLowerCase()}-evaluation-${fileSource}` +
+    `${report.retrievalMethod.toLowerCase()}-evaluation-${fileSource}` +
     `-v${report.evaluationSetVersion}.json`
   document.body.append(anchor)
   anchor.click()

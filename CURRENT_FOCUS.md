@@ -19,11 +19,18 @@ available for retrospective review.
 
 **M9 — Measured reranking**
 
-**Plain outcome:** A user can run a reranked retrieval configuration and still
-receive cited passages. An operator compares it with the lexical, vector, and
-hybrid baselines using passage-level relevance judgments and retains the
-reranker only when the measured quality gain justifies its latency and resource
-cost.
+**Plain outcome:** A user can select reranked retrieval and receive cited
+passages. An operator compares Hybrid and Hybrid + reranking on the existing
+passage-level evaluation set and records the observed quality and latency.
+Reranking remains selectable; this milestone does not approve it as the default
+or claim that it passed the original quality and runtime gate.
+
+**Scope decision — 2026-10-06:** Aleksei explicitly chose to finish M9 with the
+working retrieval flow and current 12-case comparison so subsequent milestones
+can prioritize practical Kafka and gRPC experience toward employment. The
+original broader evaluation plan is preserved below as unfulfilled work and
+tracked in `docs/FUTURE_CAPABILITIES.md`. This changes the current delivery
+boundary, not the v1 release quality targets or the measured latency threshold.
 
 ## M9 Task Tracker
 
@@ -31,13 +38,14 @@ cost.
 | --- | --- | --- |
 | M9.0 Milestone definition | The team defines passage-level relevance evidence, reranking metrics, candidate retrieval, runtime limits, and delivery boundaries before implementation. | Completed 2026-09-23 |
 | M9.1 Passage-level retrieval evaluation | The operator evaluates exact reviewed passages rather than treating every chunk from the expected document as relevant. | Completed 2026-09-24 |
-| M9.2 Reranker integration | A user selects reranked retrieval and receives reordered cited passages through the existing search flow. | In progress |
-| M9.3 Measured reranker selection | The operator compares the working reranker with the strongest baseline and accepts or rejects it using the frozen gate. | Planned |
+| M9.2 Reranker integration | A user selects reranked retrieval and receives reordered cited passages through the existing search flow. | Completed 2026-10-05; passage-promotion check deferred to M9T3 |
+| M9.3 Measured reranker comparison | The operator compares Hybrid and Hybrid + reranking on the current 12-case set and records improvements, latency, and limitations. | Completed 2026-10-06 with explicitly reduced scope; original gate not met |
 | M9.4 Milestone finalization | The M9 evaluation and reranking story works after small corrections discovered during delivery. | Planned |
 
 ## Active Task
 
-**M9T2 — Reranker integration**
+M9T3 is completed with the reduced scope recorded below. No implementation
+task is currently in progress; M9T4 remains planned for milestone finalization.
 
 ### M9T0 — Milestone definition
 
@@ -121,23 +129,59 @@ runtime settings. Do not add generation, chat, abstention, Kafka, gRPC, a
 physical retrieval-service split, GPU support, or evaluation-report storage.
 Do not tune or accept the reranker from an ad hoc browser example.
 
-### M9T3 — Measured reranker selection
+**Completion record — 2026-10-05:** Aleksei reported successful compilation,
+application startup with the BGE model, a reranked API request, and working
+browser search. The frontend exposes the backend-provided method in Search and
+Evaluation. Disabling embeddings and reranking removed their methods from the
+Search selector. Retrieval limits are configured separately for lexical
+candidates, vector candidates, fused reranking candidates, and reranked output
+(defaults 50/50/50/10). The controlled proof that an expected passage moves
+from below the fused top ten into the reranked top ten remains unverified;
+Aleksei explicitly deferred it to evaluation. No measured quality improvement
+is claimed by M9T2 completion.
+
+### M9T3 — Measured reranker comparison
 
 **Proposed branch:** `feature/m9t3-measured-reranker-selection`
 
-**User and operator scenario:** An operator runs the same version-2
+**Completion scope — 2026-10-06:** Record the current Hybrid versus Hybrid +
+reranking comparison, including nDCG@10, configuration metadata, progress logs,
+and its observed limitations. Candidate-pool instrumentation, broader dataset
+work, and final model selection are deferred. The original gate below was not
+met and is not being redefined as a successful result.
+
+**User and operator scenario:** An operator selects one synchronized Source,
+runs Hybrid and Hybrid + reranking against the same 12 reviewed questions,
+views passage-level metrics in Evaluation, downloads both JSON reports, and
+can explain the measured quality gain and runtime cost.
+
+**What proves it is done:** The two supplied version-2 reports have identical
+Source, queries, expected locator/hash pairs, and limits 50/50/50/10. They
+contain per-case nDCG@10, summary quality metrics, and latency; the frontend
+displays the passage-level report and preserves backend metadata on download.
+Evaluation logs identify run and case starts and completions. The measurement
+record below states the desktop-load condition and outstanding evidence.
+
+**Decision:** Keep reranking available as an optional method and do not promote
+it to the default. On these cases it improved ranking quality, but its observed
+p95 exceeded 3 seconds. This concludes the reduced comparison task, not a full
+quality-gate acceptance or rejection relative to the strongest baseline.
+
+**Original planned scenario and proof — not completed:**
+
+An operator runs the same version-2
 passage-level evaluation for the strongest non-reranked baseline and the
 working reranked method. The report shows candidate coverage, passage quality,
 latency, and memory, and the operator records whether the reranker is retained
 or rejected.
 
-**What proves it is done:** Candidate HitRate@50 is reported so the reranker is
+Candidate HitRate@50 is reported so the reranker is
 not blamed for relevant passages missing from its input. The two configurations
 run against the same pinned corpus, reviewed judgments, candidate limit, result
 limit, model configuration, and documented host. The report and milestone
 record contain the measurements and an explicit accept-or-reject decision.
 
-**Acceptance gate:** Relative to the strongest non-reranked baseline,
+**Original acceptance gate — not met:** Relative to the strongest non-reranked baseline,
 reranking must improve nDCG@10, must not reduce HitRate@10 or reviewed
 Recall@10, and must keep warmed end-to-end p95 below 3 seconds on the documented
 Apple M3 Max 36 GB host. MRR@10, Precision@10, p50/p95, peak process memory,
@@ -151,14 +195,38 @@ quality thresholds, or latency budget after seeing the final comparison. Do
 not add another model, tune against individual evaluation cases, or implement
 generation, chat, or report persistence.
 
+**Recorded comparison — 2026-10-06:** Aleksei supplied warmed Hybrid and
+Hybrid + reranking reports from the local desktop while many other applications
+were running. This is shared-desktop-load evidence, not an isolated performance
+benchmark. Both reports have Source `17f7561a-e0ca-462d-9323-46c84ee27ed3`,
+evaluation-set version 2, identical 12 queries and expected locator/hash pairs,
+and configured limits 50/50/50/10. The unchanged corpus is operator-reported;
+the reports do not independently identify its snapshot.
+
+- Hybrid: 6/12 cases found; mean reviewed Recall@10 0.500; MRR@10 0.259259;
+  mean nDCG@10 0.316752; p50 23 ms; p95 34 ms.
+- Hybrid + reranking: 7/12 cases found; mean reviewed Recall@10 0.583333;
+  MRR@10 0.397321; mean nDCG@10 0.439977; p50 3747 ms; p95 6154 ms.
+- Five cases improved and none regressed by expected-passage rank.
+  `environment-secrets` changed from absent in the Hybrid top ten to rank 7
+  after reranking. Its precise pre-reranking candidate rank is not recorded.
+- Observed reranked p95 exceeds the 3-second gate under the reported desktop
+  load. With 12 cases and the current nearest-rank calculation, p95 is the
+  maximum observed case duration. Background-load impact is not quantified.
+- Candidate-pool coverage, actual candidate counts, model/runtime metadata,
+  peak process memory, strongest-baseline comparison, and the larger reviewed
+  evaluation set remain incomplete and are deferred to future evaluation work.
+  The evidence supports reduced-scope task completion, not full gate acceptance.
+
 ### M9T4 — Milestone finalization
 
 **Proposed branch:** `feature/m9t4-reranking-finalization`
 
 **Purpose:** Implement only small fixes, usability improvements, and
-acceptance-evidence corrections explicitly discovered during M9. Re-run the
-passage-level baseline and reranked comparison after those corrections. Do not
-add a new retrieval capability or relax the frozen quality and runtime gate.
+acceptance-evidence corrections explicitly discovered during M9. Recheck the
+working cited-search, evaluation display, and JSON-download story after any
+corrections. Do not restart the deferred evaluation expansion, add a retrieval
+capability, tune the model, or present the original gate as passed.
 
 ### M9 Non-goals
 
@@ -166,8 +234,8 @@ add a new retrieval capability or relax the frozen quality and runtime gate.
 - No evaluation history or report database.
 - No Kafka, gRPC, physical retrieval-service split, or GPU execution.
 - No use of generated chunk UUIDs as durable evaluation identities.
-- No claim that reranking improves retrieval unless the version-2 evaluation
-  passes the frozen quality and runtime gate.
+- No general claim of superior reranking quality or approval as the default
+  from the limited 12-case comparison; the original full gate remains unmet.
 
 ## Completed Milestone Record
 

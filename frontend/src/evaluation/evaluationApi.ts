@@ -3,7 +3,14 @@ import type { RetrievalMethod } from '../search/searchApi'
 export type LexicalEvaluationCaseResult = {
   caseId: string
   query: string
-  expectedSourceLocators: string[]
+  expectedPassages: {
+    sourceLocator: string
+    chunkContentHash: string
+  }[]
+  relevantPassagesAtTen: number
+  precisionAtTen: number
+  recallAtTen: number
+  ndcgAtTen: number
   firstMatchingRank: number | null
   durationMs: number
 }
@@ -11,8 +18,11 @@ export type LexicalEvaluationCaseResult = {
 export type LexicalEvaluationSummary = {
   totalCases: number
   casesFoundAtTen: number
-  recallAtTen: number
+  hitRateAtTen: number
+  meanPrecisionAtTen: number
+  meanRecallAtTen: number
   mrrAtTen: number
+  meanNdcgAtTen: number
   p50LatencyMs: number
   p95LatencyMs: number
 }
@@ -20,6 +30,13 @@ export type LexicalEvaluationSummary = {
 export type EvaluationReport = {
   sourceId: string
   evaluationSetVersion: number
+  retrievalMethod: RetrievalMethod
+  retrievalConfiguration: {
+    lexicalCandidateLimit: number
+    vectorCandidateLimit: number
+    rerankingCandidateLimit: number
+    rerankingResultLimit: number
+  }
   caseResults: LexicalEvaluationCaseResult[]
   summary: LexicalEvaluationSummary
 }

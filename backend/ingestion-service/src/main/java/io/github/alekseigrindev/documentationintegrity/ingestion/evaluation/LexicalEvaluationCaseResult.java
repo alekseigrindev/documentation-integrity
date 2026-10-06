@@ -9,6 +9,7 @@ public record LexicalEvaluationCaseResult(
         int relevantPassagesAtTen,
         double precisionAtTen,
         double recallAtTen,
+        double ndcgAtTen,
         Integer firstMatchingRank,
         long durationMs
 ) {

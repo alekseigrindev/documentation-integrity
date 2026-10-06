@@ -57,6 +57,33 @@ the same-host local-directory picker. It requires an upload API, size/count
 limits, multipart or streaming behavior, relative-path semantics, and
 integration evidence. M6 currently measures retrieval quality.
 
+## Complete Retrieval and Reranker Evaluation
+
+**User problem:** The operator can compare the current 12 reviewed cases, but
+cannot yet explain all missed passages, establish the strongest baseline, or
+approve reranking against the full quality and runtime gate.
+
+**Required behavior:** Record the exact candidate pool and final results from
+the same search execution, including actual candidate counts, candidate
+coverage, and expected-passage ranks before and after reranking. Expand the
+reviewed evaluation set to at least 30 cases before a final comparison. Compare
+lexical, vector, Hybrid, and Hybrid + reranking on the same identified corpus
+state and judgments. Record warm-up, model identity and runtime settings,
+reranker batch size, hardware, background load, and peak process memory.
+Retain the original gate: improve nDCG@10 relative to the strongest baseline,
+do not reduce HitRate@10 or reviewed Recall@10, and keep warmed p95 below
+3 seconds on the documented Apple M3 Max 36 GB host.
+
+**Implementation trigger:** A dedicated evaluation milestone becomes active
+or a decision to promote reranking to the default requires this evidence.
+
+**Why deferred:** On 2026-10-06 Aleksei explicitly reduced M9T3 to the working
+12-case comparison to prioritize practical Kafka and gRPC delivery toward
+employment. Hybrid found expected passages in 6/12 cases, versus 7/12 with
+reranking; mean nDCG@10 increased from 0.316752 to 0.439977. Reranked p95 was
+6154 ms while other desktop applications were running. The original gate was
+not met; reranking remains optional and is not approved as the default.
+
 ## Retrieval Method Activation
 
 **User problem:** After two or more retrieval configurations have measured

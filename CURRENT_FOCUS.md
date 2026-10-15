@@ -40,12 +40,12 @@ boundary, not the v1 release quality targets or the measured latency threshold.
 | M9.1 Passage-level retrieval evaluation | The operator evaluates exact reviewed passages rather than treating every chunk from the expected document as relevant. | Completed 2026-09-24 |
 | M9.2 Reranker integration | A user selects reranked retrieval and receives reordered cited passages through the existing search flow. | Completed 2026-10-05; passage-promotion check deferred to M9T3 |
 | M9.3 Measured reranker comparison | The operator compares Hybrid and Hybrid + reranking on the current 12-case set and records improvements, latency, and limitations. | Completed 2026-10-06 with explicitly reduced scope; original gate not met |
-| M9.4 Milestone finalization | The M9 evaluation and reranking story works after small corrections discovered during delivery. | Planned |
+| M9.4 Milestone finalization | The M9 evaluation and reranking story works after small corrections discovered during delivery. | In progress |
 
 ## Active Task
 
-M9T3 is completed with the reduced scope recorded below. No implementation
-task is currently in progress; M9T4 remains planned for milestone finalization.
+M9T4 — Milestone finalization. M9T3 is completed with the reduced scope
+recorded below.
 
 ### M9T0 — Milestone definition
 
@@ -220,13 +220,25 @@ the reports do not independently identify its snapshot.
 
 ### M9T4 — Milestone finalization
 
-**Proposed branch:** `feature/m9t4-reranking-finalization`
+**Proposed branch:** `feature/m9t4-milestone-finalization`
 
 **Purpose:** Implement only small fixes, usability improvements, and
 acceptance-evidence corrections explicitly discovered during M9. Recheck the
 working cited-search, evaluation display, and JSON-download story after any
 corrections. Do not restart the deferred evaluation expansion, add a retrieval
 capability, tune the model, or present the original gate as passed.
+
+**Recorded correction — section routing:** Each existing frontend section has
+its own URL: `/search`, `/evaluations`, `/sources`, `/publishers`, and
+`/ingestion-runs`. Opening or reloading that URL keeps the user in that section;
+menu navigation updates the URL, and browser Back/Forward follows the sections.
+The root URL opens Search; an unknown path shows a not-found message.
+
+**Proof:** Open each section directly, reload it, and use Back/Forward after
+switching sections. The URL, visible section, and active menu link agree.
+Focused routing tests have been added; execution and browser confirmation are
+pending. This correction does not preserve unsaved forms or search results
+across reloads and does not change backend or retrieval behavior.
 
 ### M9 Non-goals
 

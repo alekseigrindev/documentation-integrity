@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 vi.mock('./publishers/PublisherManagement', () => ({
@@ -22,63 +22,127 @@ vi.mock('./evaluation/EvaluationManagement', () => ({
   default: () => <div>Evaluation management</div>,
 }))
 
-describe('App', () => {
-  it('switches between Search, Source, and Publisher management', () => {
+const sections = [
+  ['/search', 'Search', 'Documentation search'],
+  ['/evaluations', 'Evaluations', 'Evaluation management'],
+  ['/sources', 'Sources', 'Source management'],
+  ['/publishers', 'Publishers', 'Publisher management'],
+  ['/ingestion-runs', 'Ingestion runs', 'Ingestion run management'],
+] as const
+
+describe('App routing', () => {
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/')
+  })
+
+  it('opens Search at the root URL', () => {
     render(<App />)
 
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: 'Documentation Integrity',
-      }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('navigation', { name: 'Application' }),
-    ).toBeInTheDocument()
-    const sourcesButton = screen.getByRole('button', { name: 'Sources' })
-    const searchButton = screen.getByRole('button', { name: 'Search' })
-    const publishersButton = screen.getByRole('button', { name: 'Publishers' })
-    const ingestionRunsButton = screen.getByRole('button', {
-      name: 'Ingestion runs',
-    })
-    const evaluationsButton = screen.getByRole('button', {
-      name: 'Evaluations',
-    })
-
-    expect(searchButton).toHaveAttribute('aria-pressed', 'true')
-    expect(sourcesButton).toHaveAttribute('aria-pressed', 'false')
-    expect(publishersButton).toHaveAttribute('aria-pressed', 'false')
-    expect(ingestionRunsButton).toHaveAttribute('aria-pressed', 'false')
-    expect(evaluationsButton).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('heading', {
+      level: 1,
+      name: 'Documentation Integrity',
+    })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Application' }))
+      .toBeInTheDocument()
     expect(screen.getByText('Documentation search')).toBeInTheDocument()
-    expect(screen.queryByText('Publisher management')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Search' }))
+      .toHaveAttribute('aria-current', 'page')
+  })
 
-    fireEvent.click(evaluationsButton)
+  it.each(sections)('opens %s directly and keeps it when remounted', (path, label, content) => {
+    window.history.replaceState(null, '', path)
+    const view = render(<App />)
 
-    expect(evaluationsButton).toHaveAttribute('aria-pressed', 'true')
-    expect(searchButton).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByText('Evaluation management')).toBeInTheDocument()
+    expect(screen.getByText(content)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: label }))
+      .toHaveAttribute('aria-current', 'page')
 
-    fireEvent.click(searchButton)
+    view.unmount()
+    render(<App />)
 
-    fireEvent.click(sourcesButton)
+    expect(window.location.pathname).toBe(path)
+    expect(screen.getByText(content)).toBeInTheDocument()
+  })
 
-    expect(sourcesButton).toHaveAttribute('aria-pressed', 'true')
-    expect(searchButton).toHaveAttribute('aria-pressed', 'false')
+  it('updates the URL and active link when switching sections', () => {
+    render(<App />)
+
+    for (const [path, label, content] of sections) {
+      const link = screen.getByRole('link', { name: label })
+      expect(link).toHaveAttribute('href', path)
+      fireEvent.click(link)
+
+      expect(window.location.pathname).toBe(path)
+      expect(link).toHaveAttribute('aria-current', 'page')
+      expect(screen.getByText(content)).toBeInTheDocument()
+      expect(screen.getAllByRole('link', { current: 'page' })).toHaveLength(1)
+    }
+  })
+
+  it('follows browser Back and Forward', async () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('link', { name: 'Sources' }))
+    fireEvent.click(screen.getByRole('link', { name: 'Evaluations' }))
+
+    await act(async () => {
+      const navigation = new Promise<void>((resolve) => {
+        window.addEventListener('popstate', () => resolve(), { once: true })
+      })
+      window.history.back()
+      await navigation
+    })
+
+    expect(window.location.pathname).toBe('/sources')
     expect(screen.getByText('Source management')).toBeInTheDocument()
 
-    fireEvent.click(publishersButton)
+    await act(async () => {
+      const navigation = new Promise<void>((resolve) => {
+        window.addEventListener('popstate', () => resolve(), { once: true })
+      })
+      window.history.forward()
+      await navigation
+    })
 
-    expect(publishersButton).toHaveAttribute('aria-pressed', 'true')
-    expect(sourcesButton).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByText('Publisher management')).toBeInTheDocument()
-    expect(screen.queryByText('Source management')).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/evaluations')
+    expect(screen.getByText('Evaluation management')).toBeInTheDocument()
+  })
 
-    fireEvent.click(ingestionRunsButton)
+  it('does not intercept modified link clicks', () => {
+    render(<App />)
+    const link = screen.getByRole('link', { name: 'Sources' })
+    // Suppress jsdom's unsupported native navigation after checking the event.
+    let preventedByApp = true
+    const preventNativeNavigation = (event: MouseEvent) => {
+      preventedByApp = event.defaultPrevented
+      event.preventDefault()
+    }
+    document.addEventListener('click', preventNativeNavigation)
+    try {
+      fireEvent.click(link, { ctrlKey: true })
+      expect(preventedByApp).toBe(false)
+      expect(window.location.pathname).toBe('/')
+    } finally {
+      document.removeEventListener('click', preventNativeNavigation)
+    }
+  })
 
-    expect(ingestionRunsButton).toHaveAttribute('aria-pressed', 'true')
-    expect(publishersButton).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByText('Ingestion run management')).toBeInTheDocument()
-    expect(screen.queryByText('Publisher management')).not.toBeInTheDocument()
+  it('accepts a trailing slash', () => {
+    window.history.replaceState(null, '', '/sources/')
+    render(<App />)
+    expect(screen.getByText('Source management')).toBeInTheDocument()
+  })
+
+  it('shows an unknown-page message instead of silently opening Search', () => {
+    window.history.replaceState(null, '', '/unknown')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Page not found' }))
+      .toBeInTheDocument()
+    expect(screen.queryByText('Documentation search')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { current: 'page' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Search' }))
+    expect(window.location.pathname).toBe('/search')
+    expect(screen.getByText('Documentation search')).toBeInTheDocument()
   })
 })

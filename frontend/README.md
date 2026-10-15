@@ -49,6 +49,26 @@ npm run dev
 
 Open the local URL printed by Vite, normally `http://localhost:5173/`.
 
+## Section routes
+
+The existing sections have separate browser paths: `/search`, `/evaluations`,
+`/sources`, `/publishers`, and `/ingestion-runs`. `/` also opens Search.
+Menu links update browser history without reloading the application. Direct
+links, reloads, and Back/Forward select the section from the URL. Unknown paths
+show a not-found message. Reloading does not preserve unsaved forms or results.
+
+Vite serves the application entry point for these paths during development.
+A production web server must also serve `index.html` for frontend section
+paths, while keeping `/api` requests and static assets separate; otherwise a
+direct link or reload can return a server-side 404. Production hosting
+configuration is not part of this change.
+
+To check routing locally, open each section URL directly, reload, navigate
+between sections, and use Back/Forward. Confirm that the URL, displayed section,
+and highlighted menu link agree.
+
+## Local API proxy
+
 During local development, Vite accepts same-origin browser requests under
 `/api` and proxies them to the ingestion application at
 `http://localhost:8080`. The path is preserved, so a frontend request to

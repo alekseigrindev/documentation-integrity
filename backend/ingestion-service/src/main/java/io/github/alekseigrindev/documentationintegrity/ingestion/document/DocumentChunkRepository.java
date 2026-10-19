@@ -40,7 +40,8 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
             c.id
         """, nativeQuery = true)
     List<CitableChunkSearchRow> searchCitableChunksByQuery(
-            @Param("query") String query
+            @Param("query") String query,
+            @Param("candidateLimit") int candidateLimit
     );
 
     @Query(value = """
@@ -68,7 +69,8 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
         """, nativeQuery = true)
     List<CitableChunkSearchRow> searchCitableChunksByQueryAndSourceIds(
             @Param("query") String query,
-            @Param("sourceIds") Set<UUID> sourceIds
+            @Param("sourceIds") Set<UUID> sourceIds,
+            @Param("candidateLimit") int candidateLimit
     );
 
     boolean existsByDocumentIdAndEmbeddingIsNull(UUID documentId);
@@ -110,10 +112,11 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
         ORDER BY 
             cosine_distance(c.embedding, :queryEmbedding),
             c.id
-        LIMIT 10
+        LIMIT :candidateLimit
     """)
     List<CitableChunkSearchRow> searchCitableChunksByEmbedding(
-            @Param("queryEmbedding") float[] queryEmbedding
+            @Param("queryEmbedding") float[] queryEmbedding,
+            @Param("candidateLimit") int candidateLimit
     );
 
     @Query("""
@@ -138,10 +141,11 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
     ORDER BY
         cosine_distance(c.embedding, :queryEmbedding),
         c.id
-    LIMIT 10
+    LIMIT :candidateLimit
     """)
     List<CitableChunkSearchRow> searchCitableChunksByEmbeddingAndSourceIds(
             @Param("queryEmbedding") float[] queryEmbedding,
-            @Param("sourceIds") Set<UUID> sourceIds
+            @Param("sourceIds") Set<UUID> sourceIds,
+            @Param("candidateLimit")  int candidateLimit
     );
 }

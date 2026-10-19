@@ -260,7 +260,7 @@ public final class OnnxNomicEmbeddingModel implements TextEmbeddingModel, AutoCl
         if (!actualInputs.equals(EXPECTED_INPUTS)) {
             close();
             throw new IllegalStateException(
-                    "Unexpected ONNX model inputs: " + actualInputs
+                    "Unexpected ONNX embedding model inputs: " + actualInputs
             );
         }
 

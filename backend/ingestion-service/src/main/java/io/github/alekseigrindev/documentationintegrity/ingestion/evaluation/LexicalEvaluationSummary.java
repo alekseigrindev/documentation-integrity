@@ -3,8 +3,11 @@ package io.github.alekseigrindev.documentationintegrity.ingestion.evaluation;
 public record LexicalEvaluationSummary(
         int totalCases,
         int casesFoundAtTen,
-        double recallAtTen,
+        double hitRateAtTen,
+        double meanPrecisionAtTen,
+        double meanRecallAtTen,
         double mrrAtTen,
+        double meanNdcgAtTen,
         long p50LatencyMs,
         long p95LatencyMs
 ) {

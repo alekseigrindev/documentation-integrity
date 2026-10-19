@@ -24,7 +24,6 @@ function EvaluationManagement() {
   const [retrievalMethod, setRetrievalMethod] = useState<RetrievalMethod | ''>('')
   const [result, setResult] = useState<{
     report: EvaluationReport
-    retrievalMethod: RetrievalMethod
     displayName: string
   } | null>(null)
   const [sourceLoadFailed, setSourceLoadFailed] = useState(false)
@@ -71,10 +70,9 @@ function EvaluationManagement() {
       const report = await runEvaluation(selectedSourceId, retrievalMethod)
       setResult({
         report,
-        retrievalMethod,
         displayName: retrievalMethods?.find(
-          (method) => method.retrievalMethod === retrievalMethod,
-        )?.displayName ?? retrievalMethod,
+          (method) => method.retrievalMethod === report.retrievalMethod,
+        )?.displayName ?? report.retrievalMethod,
       })
     } catch (error) {
       setEvaluationError(
@@ -199,13 +197,19 @@ function EvaluationManagement() {
                   downloadEvaluationReport(
                     report,
                     evaluatedSource?.sourceKey ?? report.sourceId,
-                    result.retrievalMethod,
                   )
                 }
               >
                 Save evaluation results
               </button>
             </div>
+
+            <p>
+              Candidate limits: lexical {report.retrievalConfiguration.lexicalCandidateLimit}
+              {' · '}vector {report.retrievalConfiguration.vectorCandidateLimit}
+              {' · '}reranking {report.retrievalConfiguration.rerankingCandidateLimit}
+              {' · '}reranked result limit {report.retrievalConfiguration.rerankingResultLimit}
+            </p>
 
             <dl className="evaluation-summary">
               <div>
@@ -215,12 +219,24 @@ function EvaluationManagement() {
                 </dd>
               </div>
               <div>
-                <dt>Recall@10</dt>
-                <dd>{percentage(report.summary.recallAtTen)}</dd>
+                <dt>HitRate@10</dt>
+                <dd>{percentage(report.summary.hitRateAtTen)}</dd>
+              </div>
+              <div>
+                <dt>Precision@10</dt>
+                <dd>{percentage(report.summary.meanPrecisionAtTen)}</dd>
+              </div>
+              <div>
+                <dt>Reviewed Recall@10</dt>
+                <dd>{percentage(report.summary.meanRecallAtTen)}</dd>
               </div>
               <div>
                 <dt>MRR@10</dt>
                 <dd>{report.summary.mrrAtTen.toFixed(3)}</dd>
+              </div>
+              <div>
+                <dt>nDCG@10</dt>
+                <dd>{report.summary.meanNdcgAtTen.toFixed(3)}</dd>
               </div>
               <div>
                 <dt>p50 latency</dt>
@@ -252,7 +268,17 @@ function EvaluationManagement() {
                   <p className="evaluation-case-id">{caseResult.caseId}</p>
                   <p className="evaluation-case-locator">
                     Expected:{' '}
-                    {caseResult.expectedSourceLocators.join(', ')}
+                    {caseResult.expectedPassages.map((passage) => (
+                      <span key={`${passage.sourceLocator}:${passage.chunkContentHash}`}>
+                        {passage.sourceLocator} · <code>{passage.chunkContentHash}</code>{' '}
+                      </span>
+                    ))}
+                  </p>
+                  <p>
+                    Relevant passages @10: {caseResult.relevantPassagesAtTen}
+                    {' · '}Precision@10: {percentage(caseResult.precisionAtTen)}
+                    {' · '}Reviewed Recall@10: {percentage(caseResult.recallAtTen)}
+                    {' · '}nDCG@10: {caseResult.ndcgAtTen.toFixed(3)}
                   </p>
                   <p className="evaluation-case-duration">
                     Duration: {caseResult.durationMs} ms

@@ -36,3 +36,16 @@ documentation-integrity:
     tokenizer-path: ${DOCUMENTATION_EMBEDDING_TOKENIZER_PATH:}
     max-tokens: ${DOCUMENTATION_EMBEDDING_MAX_TOKENS:512}
     batch-size: ${DOCUMENTATION_EMBEDDING_BATCH_SIZE:1}
+
+  reranker:
+    enabled: ${DOCUMENTATION_RERANKER_ENABLED:false}
+    model-path: ${DOCUMENTATION_RERANKER_MODEL_PATH:}
+    tokenizer-path: ${DOCUMENTATION_RERANKER_TOKENIZER_PATH:}
+    max-tokens: ${DOCUMENTATION_RERANKER_MAX_TOKENS:}
+    batch-size: ${DOCUMENTATION_RERANKER_BATCH_SIZE:}
+
+  retrieval:
+    lexical-candidate-limit: ${DOCUMENTATION_LEXICAL_CANDIDATE_LIMIT:50}
+    vector-candidate-limit: ${DOCUMENTATION_VECTOR_CANDIDATE_LIMIT:50}
+    reranking-candidate-limit: ${DOCUMENTATION_RERANKING_CANDIDATE_LIMIT:50}
+    reranking-result-limit: ${DOCUMENTATION_RERANKING_RESULT_LIMIT:10}

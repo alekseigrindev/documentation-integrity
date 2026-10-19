@@ -5,6 +5,6 @@ import java.util.List;
 public record EvaluationCase(
         String id,
         String query,
-        List<String> expectedSourceLocators
+        List<ExpectedPassage> expectedPassages
 ) {
 }

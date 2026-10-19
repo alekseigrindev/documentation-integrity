@@ -9,32 +9,24 @@ implementation trigger are demonstrated.
 
 ## High-Priority Future Capabilities
 
-### Candidate M10 — Bounded Synchronization Execution
+### Promoted to M10 — Queued Source Synchronization
 
 **User problem:** Starting synchronization for several Sources currently runs
 all of them immediately. Embedding or reranking work can then compete for CPU,
 memory, native-runtime threads, and database connections, making the host
 unresponsive and performance measurements non-representative.
 
-**Required behavior:** Synchronization requests enter a bounded queue when all
-worker capacity is occupied. A configurable global concurrency limit controls
-how many runs may execute, and one Source cannot have overlapping queued or
-running synchronization. Operators can distinguish queued, running, succeeded,
-and failed runs and can see bounded progress without document content appearing
-in logs. A full queue produces an explicit rejection or backpressure result
-rather than unbounded memory growth. Performance reports record the worker
-limit, embedding batch size, model runtime settings, and host resources used by
-the measurement.
+**Promotion decision — 2026-10-19:** M10 plans Kafka-backed
+durable queued Sync through api-service and
+ingestion-service. CURRENT_FOCUS.md and ADR 0002 define the planning boundary:
+one serial processor, visible states, restart recovery, and duplicate handling.
+This is planned M10 work, not an existing application capability.
 
-**Implementation trigger:** Embedding and reranking establish the actual CPU,
-memory, and latency profile of one synchronization, and concurrent Source runs
-demonstrably contend for the same host resources.
-
-**Why deferred:** M8 must first prove correct vector retrieval and obtain a
-sequential baseline; reranking must also expose its measured resource profile.
-The initial solution should be the smallest bounded in-process queue that meets
-the accepted recovery semantics. Kafka or another broker requires separate
-evidence that durable cross-process delivery is needed.
+**Still deferred:** Configurable/multiple workers, multi-replica coordination,
+hard CPU/RAM quotas, detailed frontend progress, a capacity-management UI, and
+workload benchmarking. Do not restore these as implicit M10 acceptance items.
+Finite local broker storage and existing model batch limits remain required;
+serial processing alone is not a global resource limit.
 
 ### Browser Directory Upload for Remote Ingestion
 
@@ -77,9 +69,9 @@ do not reduce HitRate@10 or reviewed Recall@10, and keep warmed p95 below
 **Implementation trigger:** A dedicated evaluation milestone becomes active
 or a decision to promote reranking to the default requires this evidence.
 
-**Why deferred:** On 2026-10-06 Aleksei explicitly reduced M9T3 to the working
-12-case comparison to prioritize practical Kafka and gRPC delivery toward
-employment. Hybrid found expected passages in 6/12 cases, versus 7/12 with
+**Why deferred:** On 2026-10-06 M9T3 was explicitly reduced to the working
+12-case comparison; broader evaluation remains deferred. Hybrid found expected
+passages in 6/12 cases, versus 7/12 with
 reranking; mean nDCG@10 increased from 0.316752 to 0.439977. Reranked p95 was
 6154 ms while other desktop applications were running. The original gate was
 not met; reranking remains optional and is not approved as the default.

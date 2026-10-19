@@ -23,10 +23,14 @@ source.
 
 ## Goal Hierarchy and Delivery Authority
 
-The external product goal determines what belongs in v1: evidence-backed
-GitHub Actions diagnosis or an explicit request for missing context. The
-project's internal portfolio goal determines the rigor and evidence attached to
-that work; it does not add product capabilities by itself.
+The product goal determines what belongs in v1: evidence-backed GitHub Actions
+diagnosis or an explicit request for missing context. Implementation boundaries
+must have concrete behavior, constraints, and verification evidence.
+
+**Delivery decision — 2026-10-19:** M10 plans queued Sync through api-service,
+Kafka, and ingestion-service. M11 provisionally extracts existing retrieval
+behind gRPC. These are planned implementation boundaries, not new search
+features or claims that the current load requires microservices.
 
 This specification defines the v1 release boundary, not the active backlog.
 `CURRENT_FOCUS.md` is the authority for what may be implemented now. A later
@@ -83,6 +87,9 @@ explanation or explicitly abstain.
 - One conversational interface accepting a natural-language problem and an
   optional workflow fragment or error excerpt.
 - Manual ingestion triggered by an admin API or UI action.
+- Planned M10 delivery: Sync acknowledges a queued request without waiting for
+  processing; the operator observes its status, accepted work survives
+  application restart, and one local processor handles Sources serially.
 - A connector-neutral acquisition contract with two adapters: a local
   directory and an operator-provided Markdown or text file.
 - A pinned local checkout of the official `github/docs` repository as the

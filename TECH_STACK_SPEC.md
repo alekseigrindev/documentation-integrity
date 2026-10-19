@@ -24,11 +24,14 @@ defines the active milestone and is the authority for work that may begin now.
 
 A target technology enters implementation only when it is required by the
 active user or operator outcome, has an acceptance criterion, and can produce
-executable evidence. Internal portfolio value alone is not sufficient.
+executable evidence.
 
-Kafka and gRPC are conditional adoption decisions. Their presence in diagrams,
-rationale, or the target stack does not make them v1 completion criteria unless
-an active milestone explicitly retains and proves their role.
+**Decision — 2026-10-19:** M10 plans
+frontend -> api-service -> Kafka -> ingestion-service
+for queued Source synchronization. M11 provisionally extracts existing
+retrieval behind gRPC. MVP simplification removes unnecessary surrounding
+infrastructure, not these agreed technologies. Planned boundaries are not
+implemented capabilities; detailed M11 scope waits for M11T0.
 
 ## Implementation Status
 
@@ -37,18 +40,19 @@ an active milestone explicitly retains and proves their role.
 | Primary language and runtime | Java 25 | Implemented |
 | Application framework | Spring Boot 4.1.0; Spring AI 2.0.0 target | Boot application implemented; Spring AI pending |
 | Backend build | Maven reactor | Implemented; Maven Wrapper pending |
-| Web client | React + TypeScript | Publisher and Source management implemented; Source synchronization active in M5 |
+| Web client | React + TypeScript | Management, synchronous Sync, Search, Evaluation, and section routes implemented through M9; asynchronous Sync planned in M10 |
 | Repository layout | `backend/`, `frontend/`, `infra/`, `docs/` | Backend, infrastructure, docs, and frontend foundation present |
 | Local infrastructure | Docker Compose | Implemented |
 | Transactional/vector storage | PostgreSQL 17 + pgvector | Container verified |
 | Schema migrations | Flyway | Implemented and integration-tested |
 | Lexical search | PostgreSQL FTS + GIN | Implemented and integration-tested |
-| Vector search | pgvector + HNSW | Planned for measurable retrieval; not active |
+| Vector search | pgvector + HNSW | Implemented in M8, alongside hybrid fusion |
 | Chat model | `qwen3:8b` via host Ollama | Planned for diagnosis; not active |
-| Embedding model | `nomic-embed-text` via ONNX Runtime | Planned for measurable retrieval; not active |
-| Reranker | `bge-reranker-v2-m3` via ONNX Runtime | Planned after a measured hybrid baseline; not active |
-| Async ingestion | Apache Kafka | Container verified; application use is a conditional source-synchronization decision |
-| Internal RPC | gRPC + protobuf | Conditional decision after an in-process retrieval boundary is measured |
+| Embedding model | `nomic-embed-text` via ONNX Runtime | Implemented in M8 |
+| Reranker | `bge-reranker-v2-m3` via ONNX Runtime | Optional method implemented in M9; original quality/runtime gate not met |
+| Async ingestion | Apache Kafka | Compose broker configured; API producer, queued registration, and serial processing planned in M10, not implemented |
+| Internal RPC | gRPC + protobuf | Selected for provisional M11 retrieval extraction; not implemented |
+| Shared contracts | Minimal Maven module | Planned in M10 for versioned Sync command; no shared entities or service logic |
 | Testing | JUnit 5, AssertJ, Testcontainers | Implemented for current ingestion slice |
 | Observability | Micrometer + OpenTelemetry | Planned only where milestone acceptance requires measured behavior |
 | CI | GitHub Actions | Planned; not active |
@@ -64,13 +68,14 @@ an active milestone explicitly retains and proves their role.
    product behavior.
 3. Deliver Publisher, Source, and source-synchronization behavior as separate
    vertical slices, each with backend, frontend, tests, and acceptance evidence.
-4. Introduce Kafka only if the active synchronization slice requires durable
-   asynchronous handoff; ship idempotency, retries, dead-letter behavior, and
-   metrics with that decision.
+4. M10 introduces Kafka-backed asynchronous Sync through api-service and
+   ingestion-service; ship run visibility, duplicate handling, bounded retries,
+   dead-letter behavior, and restart evidence in the same slice (ADR 0002).
 5. Build measurable lexical, vector, hybrid, and reranked retrieval behind an
    in-process typed contract first.
-6. Extract a physical retrieval service and introduce protobuf/gRPC only if an
-   ADR demonstrates a boundary that must scale or fail independently.
+6. M11 provisionally extracts existing retrieval using protobuf/gRPC; define
+   ownership, deadlines, compatibility, and failure behavior in M11T0 and its
+   ADR before implementation.
 7. Grow the frontend shell into retrieval inspection and diagnostic chat in
    the same milestones as the corresponding backend behavior.
 
@@ -106,19 +111,24 @@ benchmarks, and an explicit reconsideration trigger.
 
 ### Kafka
 
-Kafka is the selected candidate if source ingestion demonstrates a need for
-durable work handoff, replay, backpressure, and failure isolation. The
-synchronous source path remains the baseline until that need is proven in the
-active milestone.
+Kafka is selected in M10 for durable Sync handoff. api-service publishes a
+versioned command and returns
+202 only after acknowledgement; ingestion-service registers the run before
+committing its consumer offset. A single processor executes persisted queued
+runs in ingestion-service. Run/source reads delegate through internal HTTP;
+api-service does not own ingestion tables. ADR 0002 records alternatives and
+the intentionally limited single-instance deployment. Current code remains
+synchronous until M10T1 is implemented and verified.
 
 Required evidence: versioned event contract, idempotency key, partition-key
 rationale, retry/DLT policy, duplicate-delivery test, and consumer-lag metric.
 
 ### gRPC
 
-gRPC is the selected candidate if retrieval and local inference demonstrate a
-typed, latency-sensitive boundary that must scale or fail independently from
-the public API. An in-process typed contract is the baseline.
+gRPC is selected for provisional M11 extraction of existing retrieval.
+It is not implemented, and no performance
+improvement is claimed. In-process retrieval remains the current baseline;
+M11T0 defines data/model ownership and the physical boundary before changes.
 
 Required evidence: versioned protobuf, deadlines, status mapping, health
 behavior, tracing, and compatibility tests. A service split must be justified

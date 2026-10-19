@@ -7,15 +7,18 @@
   design or implement them.
 - Before proposing or changing code, state the active milestone, the user or
   operator outcome, the acceptance evidence, and the explicit non-goals.
-- Let the external product goal determine what is built. Let the internal
-  portfolio goal determine the quality and evidence of that work; it must not
-  add capabilities that the product outcome does not require.
+- Let the product goal determine what is built. Require evidence for delivered
+  behavior; do not add capabilities outside the accepted product scope.
 - Prefer the smallest complete vertical slice that proves the agreed behavior.
   Do not introduce abstractions, service boundaries, configuration, extension
   points, or refactors solely for hypothetical future use.
 - A technology named in the target stack is not, by itself, authorization to
   introduce it. Add it only when it serves the active milestone and its
   behavior can be tested.
+- **Architecture decision (2026-10-19):** M10 plans Kafka-backed Sync through
+  api-service and ingestion-service; M11 provisionally plans existing retrieval
+  through gRPC. Minimize supporting machinery and preserve the accepted scope.
+  Planned boundaries do not establish production scale or performance benefits.
 - Starting with the first product vertical slice, backend, frontend, tests, and
   acceptance evidence belong to the same milestone unless Aleksei explicitly
   changes the boundary. Backend or infrastructure alone does not complete a
@@ -114,48 +117,15 @@
   and give only the next concrete step. Do not replan the milestone, expand its
   acceptance criteria, or propose future architecture unless asked.
 
-## Tutoring and knowledge transfer
+## Collaboration
 
-- Act as both an implementation collaborator and Aleksei's technical tutor.
-  Teach the reasoning expected from a Senior/Lead Engineer and System
-  Architect so that Aleksei can independently explain, design, challenge, and
-  review the resulting decisions instead of merely receiving generated code.
-- Aleksei implements backend changes himself by default. For backend work,
-  inspect, explain, review, write or guide tests, and provide precise edits,
-  but do not modify backend files unless Aleksei explicitly asks for that
-  particular implementation to be made.
-- For every non-trivial task, explain the problem being solved, why it belongs
-  to the active milestone, the relevant constraints and invariants, the chosen
-  approach, its trade-offs, likely failure modes, and the evidence that will
-  validate it. Keep routine mechanical explanations brief.
-- For a material design or architecture choice, present the smallest viable
-  alternatives, recommend one, and explain the consequences for boundaries,
-  data ownership, consistency, failure handling, security, operability,
-  testing, and future change. Do not introduce those mechanisms when they are
-  irrelevant to the current decision.
-- Correct misconceptions and weak reasoning directly, respectfully, and with
-  concrete evidence. Do not agree automatically, conceal uncertainty, or use
-  unexplained jargon. Define unfamiliar terms through examples from the active
-  project.
-- When a decision has meaningful trade-offs, ask Aleksei for his hypothesis or
-  reasoning when useful, then give specific feedback and fill the gaps. Do not
-  turn routine implementation into a quiz or block safe progress solely for a
-  teaching interaction.
-- After a meaningful change, include a concise debrief: what changed, why this
-  design was chosen, how it was verified, how it can fail, and what Aleksei
-  should be able to explain in a code review, system-design discussion, or
-  technical interview.
-- Keep answers and decision discussions compact enough to limit cognitive
-  load while preserving the information needed to understand or challenge the
-  result. Lead with the conclusion or recommendation, then state the essential
-  reasoning, material trade-off, evidence, and next step. Avoid repeating
-  context, enumerating irrelevant possibilities, or front-loading exhaustive
-  detail; expand progressively when risk, ambiguity, novelty, or an explicit
-  request justifies it.
-- Keep tutoring inside the accepted product scope. Teach architectural depth
-  through the real problem in the active milestone; never add abstractions,
-  technologies, documents, or features merely to create a lesson. Label useful
-  future concepts as deferred rather than implementing them.
+- Aleksei implements backend changes unless he explicitly delegates a particular
+  implementation. Inspect, explain, review, and provide precise guidance without
+  modifying backend files on his behalf by default.
+- Explain material design choices, viable alternatives, failure modes, and
+  verification evidence concisely. Do not introduce unrelated mechanisms.
+- Read additional local instructions in `private/AGENTS.md` when present.
+  Keep personal collaboration context in private files, not public documents.
 
 ## Git Restriction
 
@@ -201,15 +171,15 @@ or active-milestone decision changes.
 - `infra/` — Docker Compose, database migrations, and local infrastructure configuration.
 - `docs/` — architecture decision records and engineering notes.
 
-## Conditional Service Boundaries
+## Service Boundaries and Delivery Status
 
 - `api-service` is the target public REST boundary for the React client and
   chat orchestration; currently it proves only its implemented endpoints.
 - `ingestion-service` owns the implemented synchronous ingestion behavior.
-  Kafka delivery is conditional on an active milestone proving the need for
-  durable asynchronous handoff.
-- `retrieval-service` is a conditional extraction target. Retrieval begins
-  behind an in-process typed contract; gRPC requires a separate decision.
+  M10 plans Kafka-backed delivery through api-service; this is not implemented
+  until the active task proves the complete operator flow.
+- `retrieval-service` is the provisional M11 extraction target using gRPC.
+  Retrieval is still in-process; ownership and contracts wait for M11T0.
 
 These boundaries are not an active implementation plan or evidence that every
 service exists. Introduce a physical boundary only when `CURRENT_FOCUS.md`
@@ -264,10 +234,9 @@ rules above or authorize work outside `CURRENT_FOCUS.md`.
 
 - Java 25, Spring Boot, and Spring AI 2.0.0 for backend services.
 - PostgreSQL with pgvector for persistence and retrieval.
-- Apache Kafka is the conditional choice for asynchronous ingestion events
-  after the source-synchronization milestone proves that boundary is needed.
-- gRPC is the conditional choice for synchronous internal retrieval calls
-  after an in-process contract and ADR justify a physical service split.
+- Apache Kafka is selected for M10 asynchronous Source synchronization.
+- gRPC is selected for provisional M11 internal retrieval; implementation
+  waits for M11T0 and its ADR.
 - ONNX Runtime for `nomic-embed-text` embeddings and reranking.
 - React and TypeScript for the frontend.
 - Docker Compose for local infrastructure unless a later ADR changes this.

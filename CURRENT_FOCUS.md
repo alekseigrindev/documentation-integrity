@@ -14,10 +14,207 @@ available for retrospective review.
 - **M6 — Citable lexical search and evaluation preparation — Completed 2026-09-10**
 - **M7 — Source-scoped lexical search and evaluation — Completed 2026-09-16**
 - **M8 — Measured vector and hybrid retrieval — Completed 2026-09-23**
+- **M9 — Measured reranking — Completed 2026-10-19 with reduced evaluation scope**
 
 ## Active Milestone
 
+**M10 — Queued Source synchronization through Kafka**
+
+**Plain outcome:** An operator clicks Sync, receives a run ID without waiting
+for document processing, and follows the request in Ingestion runs. Different
+Sources are processed one at a time instead of starting competing model work.
+An accepted request survives application restart and eventually succeeds or
+shows a safe failure; duplicate message delivery does not create another run.
+
+**Scope decision — 2026-10-19:** M10 uses Kafka for synchronization; M11
+provisionally extracts existing retrieval through gRPC. Minimize supporting
+machinery while preserving these agreed boundaries. This does not claim that
+microservices are necessary for the current load or that performance improves.
+
+## M10 Task Tracker
+
+| Task | Plain outcome | Status |
+| --- | --- | --- |
+| M10T0 Milestone definition | Agree on the queued Sync story, service responsibilities, failure behavior, and smallest delivery scope. | Plan recorded; awaiting Aleksei's acceptance |
+| M10T1 Queued Source synchronization | The operator submits two Sources through api-service, sees queued/running/final states, and Sources execute one at a time without duplicate logical runs. | Planned |
+| M10T2 Recovery after interruption | Accepted requests survive application restart, interrupted runs reach a final state, and malformed messages do not block valid work. | Planned |
+| M10T3 Milestone finalization | Apply only small corrections recorded during M10 and recheck synchronization and recovery. | Planned |
+
+## Active Task
+
+**M10T0 — Milestone definition**
+
+**Branch:** `feature/m10t0-milestone-definition` (creation reported by Aleksei).
+
+**What proves it is done:** Aleksei accepts this outcome, the delivery tasks,
+the exclusions, and ADR 0002. No product implementation belongs to M10T0.
+
+### M10T1 — Queued Source synchronization
+
+**Proposed branch:** `feature/m10t1-queued-source-synchronization`
+
+**User and operator scenario:** With two registered readable local Sources,
+the operator submits Sync for both. Each request returns promptly with its run
+ID; only one Source is scanned at a time. Ingestion runs shows queued,
+running, succeeded, or failed state when the operator presses Refresh. After a
+successful run the operator can search its current documents as before.
+
+**Smallest implementation flow:**
+
+1. The browser submits the existing Source ID and a stable request ID to
+   api-service. The API uses that ID as the run ID, sends a versioned
+   synchronization command to Kafka, and returns
+   `202 Accepted` only after broker acknowledgement. This is a receipt, not a
+   completed `IngestionRun` or a claim that its database row already exists.
+2. A short ingestion-service Kafka listener registers a queued run in
+   PostgreSQL by the supplied run ID. It commits its consumer offset only
+   after registration commits; redelivery of that ID is harmless.
+3. One serial processor inside the existing ingestion-service takes persisted
+   queued runs and invokes the existing synchronization logic using that same
+   ID. It does not create a second run. PostgreSQL holds waiting work; do not
+   copy it into an unbounded executor queue or process documents in the
+   registration listener.
+4. Ingestion-service owns Source validation, run lifecycle, documents, and
+   change counts. api-service delegates run reads to ingestion-service over
+   internal HTTP; it does not read ingestion tables. For the short interval
+   before registration, the UI shows the accepted receipt as awaiting
+   registration, not a failed run. Invalid Source requests receive a safe,
+   correlated rejection rather than remaining invisible indefinitely.
+5. The existing Sources/Sync and Ingestion runs screens display the asynchronous
+   states. Route only these requests through api-service in Vite; leave
+   Publisher, Source management, Search, and Evaluation endpoints unchanged.
+   Reuse manual Refresh; no polling, SSE, or WebSocket subsystem.
+
+**Failure and resource rules:** Use one local ingestion-service instance and
+one active synchronization processor. Allow only one queued/running run per
+Source; a distinct conflicting request is visibly rejected, not silently
+executed later. Record acceptance time separately from processing start time.
+Stable IDs and durable registration belong to T1 so T2 does not rebuild the
+foundation. Restart recovery, bounded recovery attempts, and malformed-message
+isolation are delivered and verified in T2, not claimed at T1 completion.
+Preserve safe stale-document deletion and existing
+document identity. Store terminal run status before acknowledging processing
+completion; preserve terminal counts on command redelivery.
+
+Use bounded publication timeouts, finite Kafka retention/storage, and bounded
+database reads. A failed or timed-out publication is not reported as accepted;
+a timeout can be ambiguous, so retry with the same request/run ID. An invalid
+Source with a usable run ID must have a safe operator-visible rejection path.
+A document/Source
+business failure becomes a failed run, not an endless retry. Logs identify run
+ID, Source ID, registration, processing start, and final outcome without raw
+document content. Kafka does not impose a CPU/RAM quota; existing model batch
+limits remain, and this milestone only serializes synchronization work.
+
+**What proves it is done:**
+
+- With processing paused, submit two Sources through the browser. Both return
+  receipts without waiting for a scan and become queued in Ingestion runs.
+  Resume processing: one is running while the other remains queued; both
+  finish and show their own final counts or safe error.
+- Deliver the same command twice and repeat a timed-out request with the same
+  ID: one logical run remains. A second ID for an already active Source is
+  visibly rejected. Completed-run redelivery changes neither data nor counts.
+- Stop Kafka before submission: no success receipt is shown. Make a Source
+  unreadable: its run fails visibly and the next Source still runs.
+- A small licensed fixture proves unchanged reruns do not duplicate documents,
+  and a failed scan does not delete unvisited current documents.
+  Relevant backend integration checks, frontend request/state checks, lint,
+  build, and the browser flow provide evidence for these scenarios.
+
+**Boundaries:** One complete vertical slice: command contract, API, listener,
+serial processor, migrations, UI, and focused failure tests belong to this
+task. Use a minimal `contracts` module for the shared versioned command only;
+do not share JPA entities or service implementations. Keep the existing
+ingestion-service process, local PostgreSQL, and Docker Compose Kafka. Record
+the intentional HTTP change from synchronous `201` to asynchronous `202` and
+update its frontend caller together. Do not retain an operator-accessible
+synchronous route that bypasses the queue. No separate worker deployment,
+generic job framework, retry-topic hierarchy, DLT replay UI, configurable
+parallelism, cancellation, scheduling, production cluster/HA guarantees,
+resource-quota system, upload connector, new model, evaluation expansion,
+retrieval changes, gRPC, or evaluation-service extraction. Backend remains
+Aleksei's implementation work unless explicitly delegated.
+
+### M10T2 — Recovery after interruption
+
+**Proposed branch:** `feature/m10t2-synchronization-recovery`
+
+**User and operator scenario:** The operator has submitted Sync and restarts
+api-service or ingestion-service before the request finishes. The accepted work
+is not lost and the run does not stay RUNNING forever: it resumes under its
+original ID or reaches a safe failed state after bounded attempts. A malformed
+Kafka message does not prevent the next valid Source from synchronizing.
+
+**What proves it is done:**
+
+- Stop/restart api-service after acknowledgement but before registration;
+  the accepted request is still registered and processed.
+- Restart ingestion-service during registration and during synchronization.
+  Redelivery creates no duplicate run; interrupted processing recovers under
+  the original ID and reaches a terminal state within the attempt limit.
+- Force repeatable registration/recovery failures: retries stop at their
+  documented bound. Unprocessable messages reach one dead-letter topic (DLT)
+  without blocking the next valid command. An invalid Source with a usable
+  run ID also has an operator-visible rejection, not an indefinitely missing run.
+- After interruption/recovery, unchanged documents are not duplicated and
+  an incomplete scan does not delete unvisited current documents. Verify the
+  resulting state through the existing UI and focused integration checks.
+
+**Boundaries:** Extend T1's existing run records, listener, and serial processor;
+do not add another service or job framework. Registration failures and
+interrupted processing have a small documented attempt limit. Replaying work
+after interruption is allowed; exactly-once physical execution and whole-Source
+rollback are not promised. Terminal-run redelivery preserves final counts.
+Recovery assumes intact PostgreSQL/Kafka volumes and restart within the
+documented message-retention window before registration; deleted volumes,
+disk failure, indefinite downtime, and multiple ingestion replicas are excluded.
+No DLT replay UI, new retrieval behavior, or expanded product scope.
+
+T1 provides the working operator flow; T2 proves its recovery guarantees.
+M10 is not complete until both tasks and finalization are done.
+
+### M10T3 — Milestone finalization
+
+**Proposed branch:** `feature/m10t3-milestone-finalization`
+
+**Outcome and proof:** Fix only small issues explicitly recorded while
+delivering M10T1/T2, then repeat their queued Sync, restart, and failure scenarios.
+Record actual evidence and remaining limits before marking M10 complete. Do
+not add unrelated enhancements or use finalization to expand the task scope.
+
+**Recorded corrections:** None yet.
+
+## Next Milestone — Provisional Outline Only
+
+**M11 — Existing retrieval through gRPC**
+
+**Outcome:** The user searches the existing corpus through api-service and a
+separate retrieval-service, receiving the same Source-filtered cited passages.
+Retrieval uses a versioned protobuf/gRPC contract; unavailable or timed-out
+retrieval produces a safe explicit error rather than an indefinite wait.
+
+**Boundary:** Extract existing search behavior, not a new search capability.
+Define database/model ownership, deadlines, and failure mapping in M11T0.
+Frontend keeps the current Search surface; evaluation must still call the same
+retrieval behavior rather than drift to a second implementation. No task
+decomposition or application implementation is authorized before M11T0.
+
+**Acceptance:** The existing query and Source filter work across the gRPC
+boundary with citations preserved; stopped retrieval and exceeded deadlines
+produce the documented error. No improvement in quality or latency is claimed.
+A separate evaluation module remains
+deferred until its own accepted milestone.
+
+## Completed Milestone Record
+
 **M9 — Measured reranking**
+
+**Closed 2026-10-19:** PR #23 was merged into main (verified through GitHub).
+M9T4 frontend tests, lint, and build passed according to Aleksei. He explicitly
+accepted stopping without final routing browser confirmation. The original
+evaluation gate remains unmet; all earlier measurements and limitations are
+preserved below. Closure is not a claim of completing that gate.
 
 **Plain outcome:** A user can select reranked retrieval and receive cited
 passages. An operator compares Hybrid and Hybrid + reranking on the existing
@@ -26,8 +223,7 @@ Reranking remains selectable; this milestone does not approve it as the default
 or claim that it passed the original quality and runtime gate.
 
 **Scope decision — 2026-10-06:** Aleksei explicitly chose to finish M9 with the
-working retrieval flow and current 12-case comparison so subsequent milestones
-can prioritize practical Kafka and gRPC experience toward employment. The
+working retrieval flow and current 12-case comparison. The
 original broader evaluation plan is preserved below as unfulfilled work and
 tracked in `docs/FUTURE_CAPABILITIES.md`. This changes the current delivery
 boundary, not the v1 release quality targets or the measured latency threshold.
@@ -40,12 +236,12 @@ boundary, not the v1 release quality targets or the measured latency threshold.
 | M9.1 Passage-level retrieval evaluation | The operator evaluates exact reviewed passages rather than treating every chunk from the expected document as relevant. | Completed 2026-09-24 |
 | M9.2 Reranker integration | A user selects reranked retrieval and receives reordered cited passages through the existing search flow. | Completed 2026-10-05; passage-promotion check deferred to M9T3 |
 | M9.3 Measured reranker comparison | The operator compares Hybrid and Hybrid + reranking on the current 12-case set and records improvements, latency, and limitations. | Completed 2026-10-06 with explicitly reduced scope; original gate not met |
-| M9.4 Milestone finalization | The M9 evaluation and reranking story works after small corrections discovered during delivery. | In progress |
+| M9.4 Milestone finalization | The M9 evaluation and reranking story works after small corrections discovered during delivery. | Closed 2026-10-19; browser routing check unconfirmed by explicit decision |
 
-## Active Task
+## M9 Closing Task
 
-M9T4 — Milestone finalization. M9T3 is completed with the reduced scope
-recorded below.
+M9T4 — Milestone finalization is closed with the verification limitation
+recorded above. M9T3 was completed with the reduced scope recorded below.
 
 ### M9T0 — Milestone definition
 
@@ -236,8 +432,9 @@ The root URL opens Search; an unknown path shows a not-found message.
 
 **Proof:** Open each section directly, reload it, and use Back/Forward after
 switching sections. The URL, visible section, and active menu link agree.
-Focused routing tests have been added; execution and browser confirmation are
-pending. This correction does not preserve unsaved forms or search results
+Focused routing tests, lint, and build passed according to Aleksei; final
+browser confirmation was explicitly waived for closure. This correction does
+not preserve unsaved forms or search results
 across reloads and does not change backend or retrieval behavior.
 
 ### M9 Non-goals
